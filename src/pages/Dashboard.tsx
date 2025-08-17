@@ -10,7 +10,10 @@ const Dashboard = () => {
   const { data: ticketStats } = useQuery({
     queryKey: ['ticket-stats'],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_visible_tickets');
+      // Use direct query instead of RPC for now
+      const { data, error } = await supabase
+        .from('tickets')
+        .select('*');
       
       if (error) throw error;
       

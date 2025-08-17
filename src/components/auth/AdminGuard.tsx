@@ -20,7 +20,7 @@ export const AdminGuard = ({ children, allowedRoles = ['admin', 'manager'] }: Ad
     );
   }
 
-  if (!userRole || !allowedRoles.includes(userRole)) {
+  if (!userRole || !allowedRoles.includes(userRole as 'admin' | 'manager')) {
     return (
       <div className="p-6">
         <Alert className="border-destructive/50 text-destructive">

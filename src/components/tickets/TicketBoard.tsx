@@ -45,32 +45,21 @@ export const TicketBoard = () => {
     }
   });
 
-  // Buscar tickets usando a nova função RPC
+  // Buscar tickets usando query direta primeiro
   const { data: allTickets, refetch } = useQuery({
     queryKey: ['visible-tickets'],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_visible_tickets');
-      if (error) throw error;
+      const { data, error } = await supabase
+        .from('tickets')
+        .select(`
+          *,
+          sectors:sector_id (name),
+          employees:assigned_to (name),
+          profiles:created_by (name)
+        `);
       
-      // Enriquecer com dados relacionados
-      const enrichedTickets = await Promise.all(
-        data.map(async (ticket) => {
-          const [sectorData, employeeData, profileData] = await Promise.all([
-            ticket.sector_id ? supabase.from('sectors').select('name').eq('id', ticket.sector_id).single() : null,
-            ticket.assigned_to ? supabase.from('employees').select('name').eq('id', ticket.assigned_to).single() : null,
-            supabase.from('profiles').select('name').eq('user_id', ticket.created_by).single()
-          ]);
-
-          return {
-            ...ticket,
-            sectors: sectorData?.data || null,
-            employees: employeeData?.data || null,
-            profiles: profileData?.data || null
-          };
-        })
-      );
-
-      return enrichedTickets;
+      if (error) throw error;
+      return data || [];
     }
   });
 

@@ -14,9 +14,28 @@ export const UsuariosContent = () => {
   const { data: users, isLoading } = useQuery({
     queryKey: ['users-with-sectors'],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('list_users_with_sectors');
+      // Use direct query instead of RPC for now
+      const { data, error } = await supabase
+        .from('employees')
+        .select(`
+          id,
+          name,
+          email,
+          employee_sectors (
+            sectors (
+              name
+            )
+          )
+        `);
+      
       if (error) throw error;
-      return data || [];
+      
+      return data?.map(emp => ({
+        employee_id: emp.id,
+        name: emp.name,
+        email: emp.email,
+        sector_names: emp.employee_sectors?.map((es: any) => es.sectors?.name).filter(Boolean) || []
+      })) || [];
     }
   });
 
