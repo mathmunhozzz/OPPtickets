@@ -7,29 +7,43 @@ interface TicketColumnProps {
   title: string;
   tickets: any[];
   color: string;
+  bgColor: string;
   onRefetch: () => void;
 }
 
-export const TicketColumn = ({ status, title, tickets, color, onRefetch }: TicketColumnProps) => {
+export const TicketColumn = ({ status, title, tickets, color, bgColor, onRefetch }: TicketColumnProps) => {
   return (
-    <Card className="h-fit">
+    <Card className="h-fit backdrop-blur-sm bg-white/70 border-white/20 shadow-lg animate-fade-in">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-sm font-medium">
-          <div className={`w-2 h-2 rounded-full ${color}`} />
-          {title}
-          <span className="ml-auto text-xs text-muted-foreground">
+        <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+          <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${color} shadow-sm`} />
+          <span className="text-slate-700">{title}</span>
+          <span className="ml-auto text-xs text-muted-foreground bg-white/50 px-2 py-1 rounded-full">
             {tickets.length}
           </span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2">
-        {tickets.map((ticket) => (
-          <TicketCard
-            key={ticket.id}
-            ticket={ticket}
-            onRefetch={onRefetch}
-          />
+      <CardContent className="space-y-3">
+        {tickets.map((ticket, index) => (
+          <div 
+            key={ticket.id} 
+            className="animate-scale-in"
+            style={{ animationDelay: `${index * 50}ms` }}
+          >
+            <TicketCard
+              ticket={ticket}
+              onRefetch={onRefetch}
+            />
+          </div>
         ))}
+        {tickets.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground">
+            <div className={`w-12 h-12 mx-auto mb-2 rounded-full bg-gradient-to-r ${bgColor} flex items-center justify-center opacity-50`}>
+              <div className={`w-4 h-4 rounded-full bg-gradient-to-r ${color}`} />
+            </div>
+            <p className="text-sm">Nenhum ticket</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

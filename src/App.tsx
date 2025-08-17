@@ -6,9 +6,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
-import { useAuth } from "@/hooks/useAuth";
 import Dashboard from "./pages/Dashboard";
 import Tickets from "./pages/Tickets";
+import Usuarios from "./pages/Usuarios";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -20,6 +20,7 @@ const ProtectedRoutes = () => {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/tickets" element={<Tickets />} />
+        <Route path="/usuarios" element={<Usuarios />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AppLayout>
