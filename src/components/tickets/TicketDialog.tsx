@@ -47,7 +47,7 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
     try {
       const { error } = await supabase
         .from('tickets')
-        .update({ status: newStatus })
+        .update({ status: newStatus as any })
         .eq('id', ticket.id);
 
       if (error) throw error;

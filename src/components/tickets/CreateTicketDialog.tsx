@@ -54,13 +54,13 @@ export const CreateTicketDialog = ({ open, onOpenChange, userSectors, onSuccess 
         sector_id: formData.sector_id || null,
         priority: formData.priority,
         tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : [],
-        created_by: user.data.user?.id,
-        status: 'aberto'
+        created_by: user.data.user?.id as string,
+        status: 'aberto' as const
       };
 
       const { error } = await supabase
         .from('tickets')
-        .insert([ticketData]);
+        .insert(ticketData);
 
       if (error) throw error;
 
