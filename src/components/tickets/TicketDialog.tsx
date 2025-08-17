@@ -19,9 +19,9 @@ interface TicketDialogProps {
 }
 
 const statusOptions = [
-  { value: 'aberto', label: 'Aberto', color: 'bg-blue-500' },
+  { value: 'pendente', label: 'Pendente', color: 'bg-blue-500' },
   { value: 'em_analise', label: 'Em Análise', color: 'bg-yellow-500' },
-  { value: 'finalizado', label: 'Finalizado', color: 'bg-green-500' },
+  { value: 'corrigido', label: 'Corrigido', color: 'bg-green-500' },
   { value: 'negado', label: 'Negado', color: 'bg-red-500' }
 ] as const;
 
@@ -47,7 +47,7 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
     try {
       const { error } = await supabase
         .from('tickets')
-        .update({ status: newStatus as "aberto" | "em_analise" | "finalizado" | "negado" })
+        .update({ status: newStatus as "pendente" | "em_analise" | "corrigido" | "negado" })
         .eq('id', ticket.id);
 
       if (error) throw error;

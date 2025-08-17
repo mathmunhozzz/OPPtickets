@@ -10,9 +10,9 @@ import { CreateTicketDialog } from './CreateTicketDialog';
 import { Badge } from '@/components/ui/badge';
 
 const statusConfig = {
-  aberto: { label: 'Aberto', color: 'bg-blue-500' },
+  pendente: { label: 'Pendente', color: 'bg-blue-500' },
   em_analise: { label: 'Em Análise', color: 'bg-yellow-500' },
-  finalizado: { label: 'Finalizado', color: 'bg-green-500' },
+  corrigido: { label: 'Corrigido', color: 'bg-green-500' },
   negado: { label: 'Negado', color: 'bg-red-500' }
 };
 
@@ -88,7 +88,7 @@ export const TicketBoard = () => {
   }, [refetch]);
 
   const ticketsByStatus = tickets?.reduce((acc, ticket) => {
-    const status = ticket.status || 'aberto';
+    const status = ticket.status || 'pendente';
     if (!acc[status]) acc[status] = [];
     acc[status].push(ticket);
     return acc;

@@ -18,9 +18,9 @@ const Dashboard = () => {
       
       const stats = {
         total: data.length,
-        aberto: data.filter(t => t.status === 'aberto').length,
+        pendente: data.filter(t => t.status === 'pendente').length,
         em_analise: data.filter(t => t.status === 'em_analise').length,
-        finalizado: data.filter(t => t.status === 'finalizado').length,
+        corrigido: data.filter(t => t.status === 'corrigido').length,
         negado: data.filter(t => t.status === 'negado').length,
       };
       
@@ -42,8 +42,8 @@ const Dashboard = () => {
       color: 'text-yellow-600',
     },
     {
-      title: 'Finalizados',
-      value: ticketStats?.finalizado || 0,
+      title: 'Corrigidos',
+      value: ticketStats?.corrigido || 0,
       icon: CheckCircle,
       color: 'text-green-600',
     },

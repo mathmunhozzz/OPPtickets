@@ -55,7 +55,7 @@ export const CreateTicketDialog = ({ open, onOpenChange, userSectors, onSuccess 
         priority: formData.priority,
         tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : [],
         created_by: user.data.user?.id as string,
-        status: 'aberto' as const
+        status: 'pendente' as const
       };
 
       const { error } = await supabase
