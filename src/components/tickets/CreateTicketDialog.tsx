@@ -118,11 +118,13 @@ export const CreateTicketDialog = ({ open, onOpenChange, userSectors, onSuccess 
                 <SelectValue placeholder="Selecione um setor" />
               </SelectTrigger>
               <SelectContent>
-                {userSectors.map((sector) => (
-                  <SelectItem key={sector.id} value={sector.id}>
-                    {sector.name}
-                  </SelectItem>
-                ))}
+                {userSectors
+                  .filter(sector => sector?.id && sector.id.trim() !== '')
+                  .map((sector) => (
+                    <SelectItem key={sector.id} value={sector.id}>
+                      {sector.name}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
