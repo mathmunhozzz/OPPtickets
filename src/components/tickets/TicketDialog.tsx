@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, User, Tag, Clock, History } from 'lucide-react';
@@ -59,17 +59,28 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
 
       // Buscar dados dos employees que performaram as ações
       const userIds = [...new Set(logs.map(log => log.performed_by))];
+      
+      // Buscar employees
       const { data: employees } = await supabase
         .from('employees')
         .select('auth_user_id, name')
         .in('auth_user_id', userIds);
 
-      // Combinar dados - priorizar nomes dos employees
+      // Buscar profiles como fallback
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, name')
+        .in('user_id', userIds);
+
+      const employeeMap = new Map(employees?.map(emp => [emp.auth_user_id, emp.name]) || []);
+      const profileMap = new Map(profiles?.map(profile => [profile.user_id, profile.name]) || []);
+
+      // Combinar dados - priorizar nomes dos employees, fallback para profiles
       return logs.map(log => {
-        const employee = employees?.find(e => e.auth_user_id === log.performed_by);
+        const performer_name = employeeMap.get(log.performed_by) || profileMap.get(log.performed_by) || 'Sistema';
         return {
           ...log,
-          performer_name: employee?.name || 'Sistema'
+          performer_name
         };
       });
     },
@@ -144,23 +155,20 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
 
   // Determinar o nome do criador
   const getCreatorName = () => {
-    if (ticket.creator_employee?.name) {
-      return ticket.creator_employee.name;
-    }
-    if (ticket.creator_name && ticket.creator_name !== 'Usuário' && ticket.creator_name !== 'Usuario') {
-      return ticket.creator_name;
-    }
-    return 'Usuário Desconhecido';
+    return ticket.creator_name || 'Usuário';
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto" aria-describedby="ticket-dialog-description">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Tag className="h-5 w-5" />
             {ticket.title}
           </DialogTitle>
+          <DialogDescription id="ticket-dialog-description" className="sr-only">
+            Visualizar e gerenciar detalhes do ticket, incluindo status, responsável e histórico de ações
+          </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="details" className="w-full">

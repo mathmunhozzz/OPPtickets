@@ -33,13 +33,7 @@ export const TicketCard = ({ ticket, onRefetch }: TicketCardProps) => {
 
   // Determinar o nome do criador
   const getCreatorName = () => {
-    if (ticket.creator_employee?.name) {
-      return ticket.creator_employee.name;
-    }
-    if (ticket.creator_name && ticket.creator_name !== 'Usuário' && ticket.creator_name !== 'Usuario') {
-      return ticket.creator_name;
-    }
-    return 'Usuário Desconhecido';
+    return ticket.creator_name || 'Usuário';
   };
 
   return (
