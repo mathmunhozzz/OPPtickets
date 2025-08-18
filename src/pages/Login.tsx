@@ -38,42 +38,51 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">OPPTickets</CardTitle>
-          <CardDescription>Entre com suas credenciais</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu@email.com"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Sua senha"
-                required
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Entrando...' : 'Entrar'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+      <div className="container grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
+        <div className="hidden lg:block hero-gradient rounded-2xl p-10 travel-shadow bg-grid-slate-100 dark:bg-grid-slate-700/25">
+          <h1 className="text-3xl font-bold text-foreground mb-3">Bem-vindo ao OPPTickets</h1>
+          <p className="text-muted-foreground max-w-lg text-responsive">
+            Gerencie tickets com eficiência. Acompanhe o status, histórico e responsáveis de cada solicitação de forma simples e rápida.
+          </p>
+        </div>
+
+        <Card className="w-full max-w-md mx-auto travel-card travel-card-dark">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold">Entrar</CardTitle>
+            <CardDescription>Use suas credenciais para acessar</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleLogin} className="form-stack">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="seu@email.com"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Senha</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Sua senha"
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Entrando...' : 'Entrar'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

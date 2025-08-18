@@ -8,7 +8,7 @@ import { TicketColumn } from './TicketColumn';
 import { CreateTicketDialog } from './CreateTicketDialog';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCenter } from '@dnd-kit/core';
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
 import { TicketCard } from './TicketCard';
 import { toast } from 'sonner';
 
@@ -23,6 +23,12 @@ export const TicketBoard = () => {
   const [selectedSector, setSelectedSector] = useState<string>('all');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [activeTicket, setActiveTicket] = useState<any>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    })
+  );
 
   // Buscar setores do usuário
   const { data: userSectors } = useQuery({
@@ -163,6 +169,7 @@ export const TicketBoard = () => {
 
   return (
     <DndContext 
+      sensors={sensors}
       collisionDetection={closestCenter}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
