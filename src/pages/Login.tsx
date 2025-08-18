@@ -134,9 +134,7 @@ const Login = () => {
             </form>
             
             <div className="mt-6 text-center">
-              <p className="text-xs text-muted-foreground">
-                © 2024 OPPTickets. Sistema de gerenciamento de tickets.
-              </p>
+              <p className="text-xs text-muted-foreground">© 2025 OPPTickets. Sistema de gerenciamento de tickets.</p>
             </div>
           </CardContent>
         </Card>
