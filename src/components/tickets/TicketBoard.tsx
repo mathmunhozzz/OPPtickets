@@ -51,12 +51,8 @@ export const TicketBoard = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('tickets')
-        .select(`
-          *,
-          sectors:sector_id (name),
-          employees:assigned_to (name),
-          profiles:created_by (name)
-        `);
+        .select('*')
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
       return data || [];
@@ -119,15 +115,15 @@ export const TicketBoard = () => {
           </div>
 
           <Tabs value={selectedSector} onValueChange={setSelectedSector} className="w-full">
-            <TabsList className="grid w-full grid-cols-auto bg-white/50 backdrop-blur-sm border border-white/20">
-              <TabsTrigger value="all" className="data-[state=active]:bg-white/80">
+            <TabsList className="tab-scroll flex w-full items-center gap-1 bg-white/50 backdrop-blur-sm border border-white/20 overflow-x-auto whitespace-nowrap">
+              <TabsTrigger value="all" className="data-[state=active]:bg-white/80 min-w-max">
                 Todos os Setores
               </TabsTrigger>
               {userSectors?.map((sector) => (
                 <TabsTrigger 
                   key={sector.id} 
                   value={sector.id}
-                  className="data-[state=active]:bg-white/80"
+                  className="data-[state=active]:bg-white/80 min-w-max"
                 >
                   {sector.name}
                 </TabsTrigger>
