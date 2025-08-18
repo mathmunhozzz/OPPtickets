@@ -68,12 +68,15 @@ export const TicketBoard = () => {
       if (error) throw error;
       if (!ticketsData?.length) return [];
 
-      // Buscar dados dos criadores (profiles)
-      const creatorIds = [...new Set(ticketsData.map(t => t.created_by))];
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('user_id, name')
-        .in('user_id', creatorIds);
+      // Buscar nomes dos criadores via função segura (respeita RLS)
+      const ticketIds = ticketsData.map(t => t.id);
+      const { data: creatorNames } = await supabase
+        .rpc('get_ticket_creator_names', { ticket_ids: ticketIds });
+
+      // Mapear nomes por ticket_id
+      const creatorNameMap = new Map(
+        creatorNames?.map((item: any) => [item.ticket_id, item.creator_name]) || []
+      );
 
       // Buscar dados dos setores
       const sectorIds = [...new Set(ticketsData.map(t => t.sector_id).filter(Boolean))];
@@ -92,7 +95,7 @@ export const TicketBoard = () => {
       // Combinar os dados
       const processedTickets = ticketsData.map(ticket => ({
         ...ticket,
-        creator_name: profiles?.find(p => p.user_id === ticket.created_by)?.name || 'Usuário',
+        creator_name: creatorNameMap.get(ticket.id) || 'Usuário',
         sectors: sectors?.find(s => s.id === ticket.sector_id) || null,
         employees: employees?.find(e => e.id === ticket.assigned_to) || null
       }));
