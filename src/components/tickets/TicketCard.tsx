@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, User, Tag } from 'lucide-react';
+import { Calendar, User, Tag, GripVertical } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { TicketDialog } from './TicketDialog';
@@ -36,18 +36,22 @@ export const TicketCard = ({ ticket, onRefetch }: TicketCardProps) => {
       <Card 
         ref={setNodeRef}
         style={style}
-        {...attributes}
-        {...listeners}
-        className={`cursor-pointer hover:shadow-lg transition-all duration-300 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 hover:scale-[1.02] ${
-          isDragging ? 'opacity-50 rotate-6' : ''
+        className={`group relative cursor-pointer hover:shadow-lg transition-all duration-300 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 hover:scale-[1.02] ${
+          isDragging ? 'opacity-50 rotate-6 z-50' : ''
         }`}
-        onClick={(e) => {
-          if (!isDragging) {
-            setDialogOpen(true);
-          }
-        }}
+        onClick={() => setDialogOpen(true)}
       >
-        <CardContent className="p-4 space-y-3">
+        {/* Drag Handle */}
+        <div
+          {...attributes}
+          {...listeners}
+          className="absolute top-2 right-2 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-slate-100 hover:bg-slate-200"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <GripVertical className="h-4 w-4 text-slate-500" />
+        </div>
+        
+        <CardContent className="p-4 space-y-3 pr-10">
           <div className="flex items-start justify-between">
             <h4 className="font-semibold text-sm line-clamp-2 text-slate-800 leading-relaxed">
               {ticket.title}

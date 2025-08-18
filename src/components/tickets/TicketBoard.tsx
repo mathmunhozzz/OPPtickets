@@ -199,37 +199,47 @@ export const TicketBoard = () => {
               </div>
 
               <Tabs value={selectedSector} onValueChange={setSelectedSector} className="w-full">
-                <TabsList className="tab-scroll flex w-full items-center gap-1 bg-white/50 backdrop-blur-sm border border-white/20 overflow-x-auto whitespace-nowrap">
-                  <TabsTrigger value="all" className="data-[state=active]:bg-white/80 min-w-max">
-                    Todos os Setores
+                <TabsList className="tab-scroll flex w-full items-center gap-1 bg-white/50 backdrop-blur-sm border border-white/20 overflow-x-auto whitespace-nowrap p-1">
+                  <TabsTrigger value="all" className="data-[state=active]:bg-white/80 min-w-max px-3 py-2 text-sm">
+                    Todos
+                    <Badge variant="secondary" className="ml-2 text-xs">
+                      {allTickets?.length || 0}
+                    </Badge>
                   </TabsTrigger>
                   {userSectors?.map((sector) => (
                     <TabsTrigger 
                       key={sector.id} 
                       value={sector.id}
-                      className="data-[state=active]:bg-white/80 min-w-max"
+                      className="data-[state=active]:bg-white/80 min-w-max px-3 py-2 text-sm"
                     >
                       {sector.name}
+                      <Badge variant="secondary" className="ml-2 text-xs">
+                        {allTickets?.filter(ticket => ticket.sector_id === sector.id).length || 0}
+                      </Badge>
                     </TabsTrigger>
                   ))}
                 </TabsList>
 
                 <div className="mt-6">
-                  <div className="flex gap-2 mb-4 flex-wrap">
+                  <div className="flex gap-2 mb-4 flex-wrap justify-center sm:justify-start">
                     {Object.entries(statusConfig).map(([status, config]) => (
                       <Badge 
                         key={status} 
                         variant="outline" 
-                        className="flex items-center gap-1 bg-white/50 backdrop-blur-sm border-white/30"
+                        className="flex items-center gap-1 bg-white/50 backdrop-blur-sm border-white/30 px-2 py-1 text-xs sm:text-sm"
                       >
                         <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${config.color}`} />
-                        {config.label} ({ticketsByStatus[status]?.length || 0})
+                        <span className="hidden sm:inline">{config.label}</span>
+                        <span className="sm:hidden">{config.label.slice(0, 3)}</span>
+                        <span className="bg-white/60 px-1.5 py-0.5 rounded text-xs">
+                          {ticketsByStatus[status]?.length || 0}
+                        </span>
                       </Badge>
                     ))}
                   </div>
 
                   <TabsContent value={selectedSector} className="mt-0">
-                    <div className="grid-responsive grid gap-4 md:gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
                       {Object.entries(statusConfig).map(([status, config]) => (
                         <TicketColumn
                           key={status}
