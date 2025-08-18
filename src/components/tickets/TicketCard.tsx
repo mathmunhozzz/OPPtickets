@@ -2,10 +2,12 @@
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, User, Tag, GripVertical } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calendar, User, Tag, GripVertical, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { TicketDialog } from './TicketDialog';
+import { DeleteTicketDialog } from './DeleteTicketDialog';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -22,6 +24,7 @@ const priorityColors = {
 
 export const TicketCard = ({ ticket, onRefetch }: TicketCardProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: ticket.id,
@@ -46,17 +49,31 @@ export const TicketCard = ({ ticket, onRefetch }: TicketCardProps) => {
         }`}
         onClick={() => setDialogOpen(true)}
       >
-        {/* Drag Handle */}
-        <div
-          {...attributes}
-          {...listeners}
-          className="absolute top-2 right-2 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing bg-slate-100 hover:bg-slate-200"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <GripVertical className="h-4 w-4 text-slate-500" />
+        {/* Action Buttons */}
+        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0 hover:bg-destructive/10 hover:text-destructive"
+            onClick={(e) => {
+              e.stopPropagation();
+              setDeleteDialogOpen(true);
+            }}
+          >
+            <Trash2 className="h-3 w-3" />
+          </Button>
+          
+          <div
+            {...attributes}
+            {...listeners}
+            className="p-1 rounded cursor-grab active:cursor-grabbing bg-slate-100 hover:bg-slate-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <GripVertical className="h-4 w-4 text-slate-500" />
+          </div>
         </div>
         
-        <CardContent className="p-4 space-y-3 pr-10">
+        <CardContent className="p-4 space-y-3 pr-16">
           <div className="flex items-start justify-between">
             <h4 className="font-semibold text-sm line-clamp-2 text-slate-800 leading-relaxed">
               {ticket.title}
@@ -138,6 +155,13 @@ export const TicketCard = ({ ticket, onRefetch }: TicketCardProps) => {
         ticket={ticket}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
+        onRefetch={onRefetch}
+      />
+
+      <DeleteTicketDialog
+        ticket={ticket}
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
         onRefetch={onRefetch}
       />
     </>
