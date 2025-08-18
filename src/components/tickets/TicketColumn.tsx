@@ -1,6 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TicketCard } from './TicketCard';
+import { useDroppable } from '@dnd-kit/core';
 
 interface TicketColumnProps {
   status: string;
@@ -12,8 +13,17 @@ interface TicketColumnProps {
 }
 
 export const TicketColumn = ({ status, title, tickets, color, bgColor, onRefetch }: TicketColumnProps) => {
+  const { isOver, setNodeRef } = useDroppable({
+    id: status,
+  });
+
   return (
-    <Card className="h-fit backdrop-blur-sm bg-white/70 border-white/20 shadow-lg animate-fade-in">
+    <Card 
+      ref={setNodeRef}
+      className={`h-fit backdrop-blur-sm bg-white/70 border-white/20 shadow-lg animate-fade-in transition-colors ${
+        isOver ? 'bg-blue-50/80 border-blue-200' : ''
+      }`}
+    >
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-sm font-semibold">
           <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${color} shadow-sm`} />

@@ -6,6 +6,8 @@ import { Calendar, User, Tag } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { TicketDialog } from './TicketDialog';
+import { useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 
 interface TicketCardProps {
   ticket: any;
@@ -20,12 +22,30 @@ const priorityColors = {
 
 export const TicketCard = ({ ticket, onRefetch }: TicketCardProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
+  
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: ticket.id,
+  });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+  };
 
   return (
     <>
       <Card 
-        className="cursor-pointer hover:shadow-lg transition-all duration-300 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 hover:scale-[1.02]"
-        onClick={() => setDialogOpen(true)}
+        ref={setNodeRef}
+        style={style}
+        {...attributes}
+        {...listeners}
+        className={`cursor-pointer hover:shadow-lg transition-all duration-300 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 hover:scale-[1.02] ${
+          isDragging ? 'opacity-50 rotate-6' : ''
+        }`}
+        onClick={(e) => {
+          if (!isDragging) {
+            setDialogOpen(true);
+          }
+        }}
       >
         <CardContent className="p-4 space-y-3">
           <div className="flex items-start justify-between">
@@ -60,16 +80,23 @@ export const TicketCard = ({ ticket, onRefetch }: TicketCardProps) => {
                 <div className="p-1 rounded bg-purple-100">
                   <User className="h-3 w-3 text-purple-600" />
                 </div>
-                <span className="font-medium">{ticket.employees.name}</span>
+                <span className="font-medium">Responsável: {ticket.employees.name}</span>
               </div>
             )}
+
+            <div className="flex items-center gap-2 text-xs text-slate-600">
+              <div className="p-1 rounded bg-green-100">
+                <User className="h-3 w-3 text-green-600" />
+              </div>
+              <span className="font-medium">Criado por: {ticket.creator_name}</span>
+            </div>
 
             <div className="flex items-center gap-2 text-xs text-slate-600">
               <div className="p-1 rounded bg-gray-100">
                 <Calendar className="h-3 w-3 text-gray-600" />
               </div>
               <span className="font-medium">
-                {format(new Date(ticket.created_at), 'dd/MM/yyyy', { locale: ptBR })}
+                {format(new Date(ticket.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
               </span>
             </div>
           </div>

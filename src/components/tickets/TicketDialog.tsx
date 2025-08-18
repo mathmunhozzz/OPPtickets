@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,10 +5,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, User, Tag, Clock } from 'lucide-react';
+import { Calendar, User, Tag, Clock, History } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface TicketDialogProps {
   ticket: any;
@@ -40,6 +41,36 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
       if (error) throw error;
       return data || [];
     }
+  });
+
+  // Buscar logs de ações do ticket
+  const { data: actionLogs } = useQuery({
+    queryKey: ['ticket-logs', ticket.id],
+    queryFn: async () => {
+      // Buscar logs
+      const { data: logs, error } = await supabase
+        .from('ticket_action_logs')
+        .select('*')
+        .eq('ticket_id', ticket.id)
+        .order('performed_at', { ascending: false });
+      
+      if (error) throw error;
+      if (!logs?.length) return [];
+
+      // Buscar dados dos usuários que performaram as ações
+      const userIds = [...new Set(logs.map(log => log.performed_by))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, name')
+        .in('user_id', userIds);
+
+      // Combinar dados
+      return logs.map(log => ({
+        ...log,
+        performer_name: profiles?.find(p => p.user_id === log.performed_by)?.name || 'Sistema'
+      }));
+    },
+    enabled: open
   });
 
   const handleStatusChange = async (newStatus: string) => {
@@ -83,127 +114,193 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
     }
   };
 
-  const currentStatus = statusOptions.find(s => s.value === ticket.status) || statusOptions[0];
+  const getActionLabel = (actionType: string, oldValue?: string, newValue?: string) => {
+    switch (actionType) {
+      case 'created':
+        return 'Ticket criado';
+      case 'status_change':
+        const statusLabels = {
+          pendente: 'Pendente',
+          em_analise: 'Em Análise', 
+          corrigido: 'Corrigido',
+          negado: 'Negado'
+        };
+        return `Status alterado de ${statusLabels[oldValue as keyof typeof statusLabels] || oldValue} para ${statusLabels[newValue as keyof typeof statusLabels] || newValue}`;
+      case 'assignment_change':
+        if (oldValue === 'unassigned' || !oldValue) {
+          return `Ticket atribuído`;
+        } else if (newValue === 'unassigned' || !newValue) {
+          return `Atribuição removida`;
+        } else {
+          return `Responsável alterado`;
+        }
+      default:
+        return `Ação: ${actionType}`;
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <div className={`w-3 h-3 rounded-full ${currentStatus.color}`} />
+            <Tag className="h-5 w-5" />
             {ticket.title}
           </DialogTitle>
         </DialogHeader>
-        
-        <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Status</label>
-              <Select 
-                value={ticket.status} 
-                onValueChange={handleStatusChange}
-                disabled={updating}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {statusOptions.map((status) => (
-                    <SelectItem key={status.value} value={status.value}>
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${status.color}`} />
-                        {status.label}
+
+        <Tabs defaultValue="details" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="details">Detalhes</TabsTrigger>
+            <TabsTrigger value="history" className="flex items-center gap-2">
+              <History className="h-4 w-4" />
+              Histórico
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="details" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Informações básicas */}
+              <Card>
+                <CardContent className="p-4 space-y-4">
+                  <h3 className="font-semibold text-lg">Informações</h3>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">Criado em:</span>
+                      <span>{format(new Date(ticket.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-sm">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">Criado por:</span>
+                      <span>{ticket.creator_name}</span>
+                    </div>
+
+                    {ticket.sectors?.name && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Tag className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">Setor:</span>
+                        <Badge variant="outline">{ticket.sectors.name}</Badge>
                       </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    )}
+
+                    <div className="flex items-center gap-2 text-sm">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">Prioridade:</span>
+                      <Badge variant={ticket.priority === 'alta' ? 'destructive' : ticket.priority === 'media' ? 'default' : 'secondary'}>
+                        {ticket.priority === 'baixa' ? 'Baixa' : ticket.priority === 'media' ? 'Média' : 'Alta'}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {ticket.description && (
+                    <div>
+                      <span className="font-medium text-sm">Descrição:</span>
+                      <p className="mt-1 text-sm text-muted-foreground">{ticket.description}</p>
+                    </div>
+                  )}
+
+                  {ticket.tags && ticket.tags.length > 0 && (
+                    <div>
+                      <span className="font-medium text-sm">Tags:</span>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {ticket.tags.map((tag: string, index: number) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Controles de status e atribuição */}
+              <Card>
+                <CardContent className="p-4 space-y-4">
+                  <h3 className="font-semibold text-lg">Gerenciamento</h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Status</label>
+                      <Select value={ticket.status} onValueChange={handleStatusChange} disabled={updating}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {statusOptions.map((status) => (
+                            <SelectItem key={status.value} value={status.value}>
+                              <div className="flex items-center gap-2">
+                                <div className={`w-2 h-2 rounded-full ${status.color}`} />
+                                {status.label}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium">Responsável</label>
+                      <Select 
+                        value={ticket.assigned_to || 'unassigned'} 
+                        onValueChange={handleAssigneeChange}
+                        disabled={updating}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Não atribuído" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="unassigned">Não atribuído</SelectItem>
+                          {employees?.map((employee) => (
+                            <SelectItem key={employee.id} value={employee.id}>
+                              {employee.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
+          </TabsContent>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Responsável</label>
-              <Select 
-                value={ticket.assigned_to || 'unassigned'} 
-                onValueChange={handleAssigneeChange}
-                disabled={updating}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Não atribuído" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="unassigned">Não atribuído</SelectItem>
-                  {employees?.map((employee) => (
-                    <SelectItem key={employee.id} value={employee.id}>
-                      {employee.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {ticket.description && (
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Descrição</label>
-              <p className="text-sm text-muted-foreground p-3 bg-muted rounded-md">
-                {ticket.description}
-              </p>
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="space-y-3">
-              {ticket.sectors?.name && (
-                <div className="flex items-center gap-2">
-                  <Tag className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Setor:</span>
-                  <span>{ticket.sectors.name}</span>
-                </div>
-              )}
-              
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Criado por:</span>
-                <span>{ticket.profiles?.name || 'Usuário'}</span>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Criado em:</span>
-                <span>{format(new Date(ticket.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</span>
-              </div>
-
-              {ticket.updated_at !== ticket.created_at && (
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Atualizado em:</span>
-                  <span>{format(new Date(ticket.updated_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {ticket.tags && ticket.tags.length > 0 && (
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Tags</label>
-              <div className="flex flex-wrap gap-2">
-                {ticket.tags.map((tag: string, index: number) => (
-                  <Badge key={index} variant="outline">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Fechar
-            </Button>
-          </div>
-        </div>
+          <TabsContent value="history" className="space-y-4">
+            <Card>
+              <CardContent className="p-4">
+                <h3 className="font-semibold text-lg mb-4">Histórico de Ações</h3>
+                
+                {actionLogs && actionLogs.length > 0 ? (
+                  <div className="space-y-3">
+                    {actionLogs.map((log) => (
+                      <div key={log.id} className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
+                        <div className="p-2 rounded-full bg-blue-100">
+                          <History className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-sm font-medium">
+                            {getActionLabel(log.action_type, log.old_value, log.new_value)}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Por: {log.performer_name} • {format(new Date(log.performed_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <History className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>Nenhuma ação registrada ainda</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

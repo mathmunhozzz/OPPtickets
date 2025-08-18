@@ -295,6 +295,47 @@ export type Database = {
         }
         Relationships: []
       }
+      ticket_action_logs: {
+        Row: {
+          action_type: string
+          details: Json | null
+          id: string
+          new_value: string | null
+          old_value: string | null
+          performed_at: string
+          performed_by: string
+          ticket_id: string
+        }
+        Insert: {
+          action_type: string
+          details?: Json | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          performed_at?: string
+          performed_by: string
+          ticket_id: string
+        }
+        Update: {
+          action_type?: string
+          details?: Json | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          performed_at?: string
+          performed_by?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_action_logs_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_comments: {
         Row: {
           author_user_id: string
