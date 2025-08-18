@@ -65,9 +65,10 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
   const handleAssigneeChange = async (employeeId: string) => {
     setUpdating(true);
     try {
+      const actualEmployeeId = employeeId === 'unassigned' ? null : employeeId;
       const { error } = await supabase
         .from('tickets')
-        .update({ assigned_to: employeeId || null })
+        .update({ assigned_to: actualEmployeeId })
         .eq('id', ticket.id);
 
       if (error) throw error;
@@ -122,7 +123,7 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
             <div className="space-y-2">
               <label className="text-sm font-medium">Responsável</label>
               <Select 
-                value={ticket.assigned_to || ''} 
+                value={ticket.assigned_to || 'unassigned'} 
                 onValueChange={handleAssigneeChange}
                 disabled={updating}
               >
@@ -130,7 +131,7 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
                   <SelectValue placeholder="Não atribuído" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Não atribuído</SelectItem>
+                  <SelectItem value="unassigned">Não atribuído</SelectItem>
                   {employees?.map((employee) => (
                     <SelectItem key={employee.id} value={employee.id}>
                       {employee.name}
