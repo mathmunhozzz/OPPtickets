@@ -696,6 +696,13 @@ export type Database = {
         Args: { check_user_id?: string; ticket_uuid: string }
         Returns: boolean
       }
+      get_ticket_creator_names: {
+        Args: { check_user_id?: string; ticket_ids: string[] }
+        Returns: {
+          creator_name: string
+          ticket_id: string
+        }[]
+      }
       get_user_role: {
         Args: { check_user_id?: string }
         Returns: Database["public"]["Enums"]["app_role"]

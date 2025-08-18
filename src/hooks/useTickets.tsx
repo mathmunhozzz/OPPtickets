@@ -41,40 +41,24 @@ export const useTickets = () => {
 
       console.log('Tickets encontrados:', tickets.length);
 
-      // 2. Extrair IDs únicos dos criadores
-      const creatorIds = [...new Set(tickets.map(t => t.created_by))];
-      
-      // 3. Buscar employees por auth_user_id
-      const { data: employees } = await supabase
-        .from('employees')
-        .select('auth_user_id, id, name, email')
-        .in('auth_user_id', creatorIds);
+      // 2. Buscar nomes dos criadores usando função segura
+      const ticketIds = tickets.map(t => t.id);
+      const { data: creatorNames } = await supabase
+        .rpc('get_ticket_creator_names', { ticket_ids: ticketIds });
 
-      // 4. Buscar profiles como fallback
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('user_id, name')
-        .in('user_id', creatorIds);
-
-      // 5. Criar mapas para lookup rápido
-      const employeeMap = new Map(
-        employees?.map(emp => [emp.auth_user_id, emp]) || []
-      );
-      const profileMap = new Map(
-        profiles?.map(profile => [profile.user_id, profile]) || []
+      // 3. Criar mapa de nomes por ticket_id
+      const creatorNameMap = new Map(
+        creatorNames?.map(item => [item.ticket_id, item.creator_name]) || []
       );
 
-      // 6. Enriquecer tickets com nomes dos criadores
+      // 4. Enriquecer tickets com nomes dos criadores
       const enrichedTickets: EnrichedTicket[] = tickets.map(ticket => {
-        const employee = employeeMap.get(ticket.created_by);
-        const profile = profileMap.get(ticket.created_by);
-        
-        const creator_name = employee?.name || profile?.name || 'Usuário';
+        const creator_name = creatorNameMap.get(ticket.id) || 'Usuário';
         
         return {
           ...ticket,
           creator_name,
-          creator_employee: employee || null
+          creator_employee: null // Será preenchido se necessário
         };
       });
 
