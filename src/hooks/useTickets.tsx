@@ -38,15 +38,11 @@ export const useTickets = () => {
       
       // Enriquecer dados com informações adicionais se necessário
       const enrichedTickets = data?.map(ticket => {
-        // Garantir que o creator_name seja correto
+        // Garantir que o creator_name seja correto baseado no employee
         let creator_name = 'Usuário Desconhecido';
         
         if (ticket.creator_employee?.[0]?.name) {
           creator_name = ticket.creator_employee[0].name;
-        } else if (ticket.creator_name && 
-                   ticket.creator_name !== 'Usuário' && 
-                   ticket.creator_name !== 'Usuario') {
-          creator_name = ticket.creator_name;
         }
 
         return {
