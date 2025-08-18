@@ -31,6 +31,17 @@ export const TicketCard = ({ ticket, onRefetch }: TicketCardProps) => {
     transform: CSS.Translate.toString(transform),
   };
 
+  // Determinar o nome do criador
+  const getCreatorName = () => {
+    if (ticket.creator_employee?.name) {
+      return ticket.creator_employee.name;
+    }
+    if (ticket.creator_name && ticket.creator_name !== 'Usuário' && ticket.creator_name !== 'Usuario') {
+      return ticket.creator_name;
+    }
+    return 'Usuário Desconhecido';
+  };
+
   return (
     <>
       <Card 
@@ -92,7 +103,7 @@ export const TicketCard = ({ ticket, onRefetch }: TicketCardProps) => {
               <div className="p-1 rounded bg-green-100">
                 <User className="h-3 w-3 text-green-600" />
               </div>
-              <span className="font-medium">Criado por: {ticket.creator_name}</span>
+              <span className="font-medium">Criado por: {getCreatorName()}</span>
             </div>
 
             <div className="flex items-center gap-2 text-xs text-slate-600">

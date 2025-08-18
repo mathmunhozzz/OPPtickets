@@ -1,8 +1,8 @@
+
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, User, Tag, Clock, History } from 'lucide-react';
@@ -43,7 +43,7 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
     }
   });
 
-  // Buscar logs de ações do ticket
+  // Buscar logs de ações do ticket com nomes dos performers
   const { data: actionLogs } = useQuery({
     queryKey: ['ticket-logs', ticket.id],
     queryFn: async () => {
@@ -57,18 +57,21 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
       if (error) throw error;
       if (!logs?.length) return [];
 
-      // Buscar dados dos usuários que performaram as ações
+      // Buscar dados dos employees que performaram as ações
       const userIds = [...new Set(logs.map(log => log.performed_by))];
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('user_id, name')
-        .in('user_id', userIds);
+      const { data: employees } = await supabase
+        .from('employees')
+        .select('auth_user_id, name')
+        .in('auth_user_id', userIds);
 
-      // Combinar dados
-      return logs.map(log => ({
-        ...log,
-        performer_name: profiles?.find(p => p.user_id === log.performed_by)?.name || 'Sistema'
-      }));
+      // Combinar dados - priorizar nomes dos employees
+      return logs.map(log => {
+        const employee = employees?.find(e => e.auth_user_id === log.performed_by);
+        return {
+          ...log,
+          performer_name: employee?.name || 'Sistema'
+        };
+      });
     },
     enabled: open
   });
@@ -139,6 +142,17 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
     }
   };
 
+  // Determinar o nome do criador
+  const getCreatorName = () => {
+    if (ticket.creator_employee?.name) {
+      return ticket.creator_employee.name;
+    }
+    if (ticket.creator_name && ticket.creator_name !== 'Usuário' && ticket.creator_name !== 'Usuario') {
+      return ticket.creator_name;
+    }
+    return 'Usuário Desconhecido';
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
@@ -175,7 +189,7 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
                     <div className="flex items-center gap-2 text-sm">
                       <User className="h-4 w-4 text-muted-foreground" />
                       <span className="font-medium">Criado por:</span>
-                      <span>{ticket.creator_name}</span>
+                      <span className="font-semibold text-blue-600">{getCreatorName()}</span>
                     </div>
 
                     {ticket.sectors?.name && (
@@ -198,7 +212,7 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
                   {ticket.description && (
                     <div>
                       <span className="font-medium text-sm">Descrição:</span>
-                      <p className="mt-1 text-sm text-muted-foreground">{ticket.description}</p>
+                      <p className="mt-1 text-sm text-muted-foreground bg-slate-50 p-3 rounded-md">{ticket.description}</p>
                     </div>
                   )}
 
@@ -262,6 +276,15 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {ticket.employees?.name && (
+                      <div className="p-3 bg-purple-50 rounded-md border border-purple-200">
+                        <div className="flex items-center gap-2 text-sm text-purple-800">
+                          <User className="h-4 w-4" />
+                          <span className="font-medium">Responsável atual: {ticket.employees.name}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -276,16 +299,19 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
                 {actionLogs && actionLogs.length > 0 ? (
                   <div className="space-y-3">
                     {actionLogs.map((log) => (
-                      <div key={log.id} className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
+                      <div key={log.id} className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
                         <div className="p-2 rounded-full bg-blue-100">
                           <History className="h-4 w-4 text-blue-600" />
                         </div>
                         <div className="flex-1">
-                          <div className="text-sm font-medium">
+                          <div className="text-sm font-medium text-slate-800">
                             {getActionLabel(log.action_type, log.old_value, log.new_value)}
                           </div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            Por: {log.performer_name} • {format(new Date(log.performed_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                          <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
+                            <User className="h-3 w-3" />
+                            <span className="font-medium text-blue-600">{log.performer_name}</span>
+                            <span>•</span>
+                            <span>{format(new Date(log.performed_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</span>
                           </div>
                         </div>
                       </div>
