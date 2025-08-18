@@ -692,6 +692,10 @@ export type Database = {
       }
     }
     Functions: {
+      can_view_ticket: {
+        Args: { check_user_id?: string; ticket_uuid: string }
+        Returns: boolean
+      }
       get_user_role: {
         Args: { check_user_id?: string }
         Returns: Database["public"]["Enums"]["app_role"]
