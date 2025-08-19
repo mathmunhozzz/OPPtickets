@@ -10,6 +10,7 @@ import { AuthGuard } from "@/components/auth/AuthGuard";
 import Dashboard from "./pages/Dashboard";
 import Tickets from "./pages/Tickets";
 import Usuarios from "./pages/Usuarios";
+import Relatorios from "./pages/Relatorios";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -32,6 +33,7 @@ const ProtectedRoutes = () => {
         <Route path="/" element={<Dashboard />} />
         <Route path="/tickets" element={<Tickets />} />
         <Route path="/usuarios" element={<Usuarios />} />
+        <Route path="/relatorios" element={<Relatorios />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AppLayout>

@@ -1,4 +1,4 @@
-import { Home, Ticket, LogOut, Users } from 'lucide-react';
+import { Home, Ticket, LogOut, Users, BarChart3 } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -56,6 +56,15 @@ export function AppSidebar() {
                     <Link to="/usuarios" className="flex items-center gap-3">
                       <Users className="h-4 w-4" />
                       <span className="font-medium">Usuários</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>}
+              
+              {canViewUsers && <SidebarMenuItem>
+                  <SidebarMenuButton asChild className={`transition-all duration-200 ${isActive('/relatorios') ? 'bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 shadow-sm' : 'hover:bg-white/50'}`}>
+                    <Link to="/relatorios" className="flex items-center gap-3">
+                      <BarChart3 className="h-4 w-4" />
+                      <span className="font-medium">Relatórios</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>}
