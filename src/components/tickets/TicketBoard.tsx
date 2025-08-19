@@ -28,7 +28,11 @@ export const TicketBoard = () => {
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
+      activationConstraint: {
+        distance: 3,
+        delay: 100,
+        tolerance: 5,
+      },
     })
   );
 
@@ -194,12 +198,18 @@ const handleDragEnd = async (event: DragEndEvent) => {
 
     try {
       console.log('📡 Updating database...');
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('tickets')
         .update({ status: newStatus as 'pendente' | 'em_analise' | 'corrigido' | 'negado' })
-        .eq('id', ticketId);
+        .eq('id', ticketId)
+        .select('id');
 
       if (error) throw error;
+      
+      // Check if any rows were actually updated (RLS might prevent updates)
+      if (!data || data.length === 0) {
+        throw new Error('Sem permissão para mover este ticket ou ticket não encontrado');
+      }
       
       console.log('✅ Database updated successfully');
       toast.success(`Ticket movido para ${statusConfig[newStatus as keyof typeof statusConfig].label}`);
@@ -209,8 +219,9 @@ const handleDragEnd = async (event: DragEndEvent) => {
       console.log('❌ Database update failed, reverting...', error);
       // Reverter em caso de erro
       queryClient.setQueryData(['visible-tickets'], currentTickets);
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao mover ticket. Tente novamente.';
       console.error('Erro ao mover ticket:', error);
-      toast.error('Erro ao mover ticket');
+      toast.error(errorMessage);
     }
   };
 

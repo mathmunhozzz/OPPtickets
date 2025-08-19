@@ -44,10 +44,11 @@ export const TicketCard = ({ ticket, onRefetch }: TicketCardProps) => {
       <Card 
         ref={setNodeRef}
         style={style}
-        className={`group relative cursor-pointer hover:shadow-lg transition-all duration-300 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 hover:scale-[1.02] ${
+        {...attributes}
+        {...listeners}
+        className={`group relative cursor-grab active:cursor-grabbing hover:shadow-lg transition-all duration-300 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 hover:scale-[1.02] ${
           isDragging ? 'opacity-50 rotate-6 z-50' : ''
         }`}
-        onClick={() => setDialogOpen(true)}
       >
         {/* Action Buttons */}
         <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -63,17 +64,15 @@ export const TicketCard = ({ ticket, onRefetch }: TicketCardProps) => {
             <Trash2 className="h-3 w-3" />
           </Button>
           
-          <div
-            {...attributes}
-            {...listeners}
-            className="p-1 rounded cursor-grab active:cursor-grabbing bg-slate-100 hover:bg-slate-200"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="p-1 rounded bg-slate-100 hover:bg-slate-200">
             <GripVertical className="h-4 w-4 text-slate-500" />
           </div>
         </div>
         
-        <CardContent className="p-4 space-y-3 pr-16">
+        <CardContent 
+          className="p-4 space-y-3 pr-16" 
+          onClick={() => setDialogOpen(true)}
+        >
           <div className="flex items-start justify-between">
             <h4 className="font-semibold text-sm line-clamp-2 text-slate-800 leading-relaxed">
               {ticket.title}
