@@ -151,35 +151,62 @@ const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveTicket(null);
 
-    if (!over || !active) return;
+    console.log('🔄 Drag End Event:', { active: active?.id, over: over?.id });
+
+    if (!over || !active) {
+      console.log('❌ No over or active element');
+      return;
+    }
 
     const ticketId = active.id as string;
     const newStatus = over.id as string;
     
+    console.log('📊 Moving ticket:', { ticketId, newStatus });
+    
     // Verificar se é um status válido
-    if (!statusConfig[newStatus as keyof typeof statusConfig]) return;
+    if (!statusConfig[newStatus as keyof typeof statusConfig]) {
+      console.log('❌ Invalid status:', newStatus);
+      return;
+    }
 
     const currentTickets = (queryClient.getQueryData<any[]>(['visible-tickets']) ?? []);
     const moving = currentTickets.find((t: any) => t.id === ticketId);
-    if (!moving || moving.status === newStatus) return;
+    
+    console.log('🎯 Found ticket:', { moving: !!moving, currentStatus: moving?.status, newStatus });
+    
+    if (!moving || moving.status === newStatus) {
+      console.log('❌ No ticket found or same status');
+      return;
+    }
 
+    console.log('✅ Starting optimistic update...');
+    
     // Otimismo: mover imediatamente no cache
     queryClient.setQueryData<any[]>(['visible-tickets'], (old) => {
       if (!old) return old as any;
-      return old.map((t: any) => (t.id === ticketId ? { ...t, status: newStatus } : t));
+      const updated = old.map((t: any) => (t.id === ticketId ? { ...t, status: newStatus } : t));
+      console.log('🔄 Cache updated', { 
+        oldTicket: old.find(t => t.id === ticketId)?.status, 
+        newTicket: updated.find(t => t.id === ticketId)?.status 
+      });
+      return updated;
     });
 
     try {
+      console.log('📡 Updating database...');
       const { error } = await supabase
         .from('tickets')
         .update({ status: newStatus as 'pendente' | 'em_analise' | 'corrigido' | 'negado' })
         .eq('id', ticketId);
 
       if (error) throw error;
+      
+      console.log('✅ Database updated successfully');
       toast.success(`Ticket movido para ${statusConfig[newStatus as keyof typeof statusConfig].label}`);
       // Garante dados frescos (ex.: updated_at)
       refetch();
     } catch (error) {
+      console.log('❌ Database update failed, reverting...', error);
       // Reverter em caso de erro
       queryClient.setQueryData(['visible-tickets'], currentTickets);
       console.error('Erro ao mover ticket:', error);
