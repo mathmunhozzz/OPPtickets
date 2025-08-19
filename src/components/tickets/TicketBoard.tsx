@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Plus, Ticket as TicketIcon } from 'lucide-react';
@@ -24,6 +24,7 @@ export const TicketBoard = () => {
   const [selectedSector, setSelectedSector] = useState<string>('all');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [activeTicket, setActiveTicket] = useState<any>(null);
+  const queryClient = useQueryClient();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -146,7 +147,7 @@ export const TicketBoard = () => {
     setActiveTicket(ticket);
   };
 
-  const handleDragEnd = async (event: DragEndEvent) => {
+const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveTicket(null);
 
@@ -158,8 +159,15 @@ export const TicketBoard = () => {
     // Verificar se é um status válido
     if (!statusConfig[newStatus as keyof typeof statusConfig]) return;
 
-    const ticket = tickets?.find(t => t.id === ticketId);
-    if (!ticket || ticket.status === newStatus) return;
+    const currentTickets = (queryClient.getQueryData<any[]>(['visible-tickets']) ?? []);
+    const moving = currentTickets.find((t: any) => t.id === ticketId);
+    if (!moving || moving.status === newStatus) return;
+
+    // Otimismo: mover imediatamente no cache
+    queryClient.setQueryData<any[]>(['visible-tickets'], (old) => {
+      if (!old) return old as any;
+      return old.map((t: any) => (t.id === ticketId ? { ...t, status: newStatus } : t));
+    });
 
     try {
       const { error } = await supabase
@@ -168,10 +176,12 @@ export const TicketBoard = () => {
         .eq('id', ticketId);
 
       if (error) throw error;
-      
       toast.success(`Ticket movido para ${statusConfig[newStatus as keyof typeof statusConfig].label}`);
+      // Garante dados frescos (ex.: updated_at)
       refetch();
     } catch (error) {
+      // Reverter em caso de erro
+      queryClient.setQueryData(['visible-tickets'], currentTickets);
       console.error('Erro ao mover ticket:', error);
       toast.error('Erro ao mover ticket');
     }
