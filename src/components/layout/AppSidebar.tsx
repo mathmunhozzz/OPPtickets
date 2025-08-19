@@ -1,5 +1,5 @@
 import { Home, Ticket, LogOut, Users } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter } from '@/components/ui/sidebar';
@@ -44,19 +44,19 @@ export function AppSidebar() {
             <SidebarMenu>
               {menuItems.map(item => <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild className={`transition-all duration-200 ${isActive(item.url) ? 'bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 shadow-sm' : 'hover:bg-white/50'}`}>
-                    <a href={item.url} className="flex items-center gap-3">
+                    <Link to={item.url} className="flex items-center gap-3">
                       <item.icon className="h-4 w-4" />
                       <span className="font-medium">{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>)}
               
               {canViewUsers && <SidebarMenuItem>
                   <SidebarMenuButton asChild className={`transition-all duration-200 ${isActive('/usuarios') ? 'bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 shadow-sm' : 'hover:bg-white/50'}`}>
-                    <a href="/usuarios" className="flex items-center gap-3">
+                    <Link to="/usuarios" className="flex items-center gap-3">
                       <Users className="h-4 w-4" />
                       <span className="font-medium">Usuários</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>}
             </SidebarMenu>

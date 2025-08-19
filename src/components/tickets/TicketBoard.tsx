@@ -1,16 +1,17 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Plus, Ticket as TicketIcon } from 'lucide-react';
-import { TicketColumn } from './TicketColumn';
+import { MemoizedTicketColumn } from './MemoizedTicketColumn';
 import { CreateTicketDialog } from './CreateTicketDialog';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
-import { TicketCard } from './TicketCard';
+import { MemoizedTicketCard } from './MemoizedTicketCard';
 import { toast } from 'sonner';
+import { useDebounce } from '@/hooks/useDebounce';
 
 const statusConfig = {
   pendente: { label: 'Pendente', color: 'from-blue-500 to-blue-600', bgColor: 'from-blue-50 to-blue-100' },
@@ -52,23 +53,28 @@ export const TicketBoard = () => {
 
       if (error) throw error;
       return data?.map(es => es.sectors).filter(Boolean) || [];
-    }
+    },
+    staleTime: 10 * 60 * 1000, // 10 minutes
   });
 
-  // Buscar tickets simples primeiro
+  // Buscar tickets com relações otimizadas
   const { data: allTickets, refetch } = useQuery({
     queryKey: ['visible-tickets'],
     queryFn: async () => {
-      // Primeiro, buscar todos os tickets
+      // Buscar tickets com relacionamentos em uma query
       const { data: ticketsData, error } = await supabase
         .from('tickets')
-        .select('*')
+        .select(`
+          *,
+          sectors:sector_id (id, name),
+          employees:assigned_to (id, name)
+        `)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
       if (!ticketsData?.length) return [];
 
-      // Buscar nomes dos criadores via função segura (respeita RLS)
+      // Buscar nomes dos criadores via função segura
       const ticketIds = ticketsData.map(t => t.id);
       const { data: creatorNames } = await supabase
         .rpc('get_ticket_creator_names', { ticket_ids: ticketIds });
@@ -78,61 +84,62 @@ export const TicketBoard = () => {
         creatorNames?.map((item: any) => [item.ticket_id, item.creator_name]) || []
       );
 
-      // Buscar dados dos setores
-      const sectorIds = [...new Set(ticketsData.map(t => t.sector_id).filter(Boolean))];
-      const { data: sectors } = await supabase
-        .from('sectors')
-        .select('id, name')
-        .in('id', sectorIds);
-
-      // Buscar dados dos responsáveis
-      const employeeIds = [...new Set(ticketsData.map(t => t.assigned_to).filter(Boolean))];
-      const { data: employees } = await supabase
-        .from('employees')
-        .select('id, name')
-        .in('id', employeeIds);
-
       // Combinar os dados
       const processedTickets = ticketsData.map(ticket => ({
         ...ticket,
-        creator_name: creatorNameMap.get(ticket.id) || 'Usuário',
-        sectors: sectors?.find(s => s.id === ticket.sector_id) || null,
-        employees: employees?.find(e => e.id === ticket.assigned_to) || null
+        creator_name: creatorNameMap.get(ticket.id) || 'Usuário'
       }));
       
       return processedTickets;
-    }
+    },
+    staleTime: 30 * 1000, // 30 seconds
   });
 
-  // Filtrar tickets por setor selecionado
-  const tickets = selectedSector === 'all' 
-    ? allTickets 
-    : allTickets?.filter(ticket => ticket.sector_id === selectedSector);
+  // Filtrar tickets por setor selecionado (memoizado)
+  const tickets = useMemo(() => {
+    return selectedSector === 'all' 
+      ? allTickets 
+      : allTickets?.filter(ticket => ticket.sector_id === selectedSector);
+  }, [allTickets, selectedSector]);
 
-  // Realtime updates
+  // Debounced refetch for performance
+  const debouncedRefetch = useDebounce(refetch, 500);
+
+  // Realtime updates optimizado
   useEffect(() => {
     const channel = supabase
       .channel('tickets-changes')
       .on('postgres_changes', {
-        event: '*',
+        event: 'INSERT',
         schema: 'public',
         table: 'tickets'
-      }, () => {
-        refetch();
-      })
+      }, debouncedRefetch)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'tickets'
+      }, debouncedRefetch)
+      .on('postgres_changes', {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'tickets'
+      }, debouncedRefetch)
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [refetch]);
+  }, [debouncedRefetch]);
 
-  const ticketsByStatus = tickets?.reduce((acc, ticket) => {
-    const status = ticket.status || 'pendente';
-    if (!acc[status]) acc[status] = [];
-    acc[status].push(ticket);
-    return acc;
-  }, {} as Record<string, any[]>) || {};
+  // Memoizar groupBy para evitar recálculos
+  const ticketsByStatus = useMemo(() => {
+    return tickets?.reduce((acc, ticket) => {
+      const status = ticket.status || 'pendente';
+      if (!acc[status]) acc[status] = [];
+      acc[status].push(ticket);
+      return acc;
+    }, {} as Record<string, any[]>) || {};
+  }, [tickets]);
 
   const handleDragStart = (event: DragStartEvent) => {
     const ticket = tickets?.find(t => t.id === event.active.id);
@@ -244,7 +251,7 @@ export const TicketBoard = () => {
                   <TabsContent value={selectedSector} className="mt-0">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
                       {Object.entries(statusConfig).map(([status, config]) => (
-                        <TicketColumn
+                        <MemoizedTicketColumn
                           key={status}
                           status={status}
                           title={config.label}
@@ -274,7 +281,7 @@ export const TicketBoard = () => {
         <DragOverlay>
           {activeTicket ? (
             <div className="rotate-6 opacity-80">
-              <TicketCard ticket={activeTicket} onRefetch={refetch} />
+              <MemoizedTicketCard ticket={activeTicket} onRefetch={refetch} />
             </div>
           ) : null}
         </DragOverlay>

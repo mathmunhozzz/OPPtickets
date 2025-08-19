@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TicketCard } from './TicketCard';
+import { MemoizedTicketCard } from './MemoizedTicketCard';
 import { useDroppable } from '@dnd-kit/core';
 
 interface TicketColumnProps {
@@ -40,7 +40,7 @@ export const TicketColumn = ({ status, title, tickets, color, bgColor, onRefetch
             className="animate-scale-in"
             style={{ animationDelay: `${index * 50}ms` }}
           >
-            <TicketCard
+            <MemoizedTicketCard
               ticket={ticket}
               onRefetch={onRefetch}
             />
