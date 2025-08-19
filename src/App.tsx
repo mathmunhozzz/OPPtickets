@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,6 +13,19 @@ import Usuarios from "./pages/Usuarios";
 import Relatorios from "./pages/Relatorios";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+
+// Create query client outside component to avoid re-creation
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+      retry: 2,
+    },
+  },
+});
 
 const ProtectedRoutes = () => {
   return (
@@ -29,20 +42,8 @@ const ProtectedRoutes = () => {
 };
 
 const App = () => {
-  const queryClient = useMemo(() => new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 5 * 60 * 1000, // 5 minutes
-        gcTime: 10 * 60 * 1000, // 10 minutes (previously cacheTime)
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: true,
-        retry: 2,
-      },
-    },
-  }), []);
-
-  console.log('App component rendering, queryClient:', queryClient);
-
+  console.log('App rendering');
+  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
