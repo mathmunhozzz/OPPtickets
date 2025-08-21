@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Home, 
@@ -25,7 +24,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuth";
@@ -47,7 +45,10 @@ const adminItems = [
 ];
 
 export function AppSidebar() {
-  const { collapsed } = useSidebar();
+  // ✅ useSidebar retorna { state }, então criamos "collapsed" manualmente
+  const { state } = useSidebar();
+  const collapsed = state === "collapsed";
+
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
@@ -61,7 +62,6 @@ export function AppSidebar() {
     adminItems.some(item => currentPath === item.url)
   );
 
-  const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive ? "bg-accent text-accent-foreground" : "hover:bg-accent/50";
 
@@ -103,7 +103,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Clients Section - Visible to all authenticated users */}
+        {/* Clients Section */}
         <SidebarGroup>
           <SidebarGroupLabel 
             className="flex items-center cursor-pointer"
@@ -132,7 +132,7 @@ export function AppSidebar() {
           )}
         </SidebarGroup>
 
-        {/* Admin Section - Only for admins/managers */}
+        {/* Admin Section */}
         {canAccessAdmin && (
           <SidebarGroup>
             <SidebarGroupLabel 
@@ -167,7 +167,10 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleLogout} className="w-full text-red-600 hover:text-red-700 hover:bg-red-50">
+            <SidebarMenuButton 
+              onClick={handleLogout} 
+              className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
               <LogOut className="mr-2 h-4 w-4" />
               {!collapsed && <span>Sair</span>}
             </SidebarMenuButton>
