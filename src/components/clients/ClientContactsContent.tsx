@@ -49,12 +49,15 @@ export const ClientContactsContent = () => {
   const { data: contacts = [], isLoading } = useClientContacts();
   const deleteContactMutation = useDeleteClientContact();
 
-  const filteredContacts = contacts.filter((contact) =>
-    contact.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-    contact.clients?.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-    contact.email?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-    contact.position?.toLowerCase().includes(debouncedSearch.toLowerCase())
-  );
+  const filteredContacts = contacts.filter((contact) => {
+    const searchLower = debouncedSearch.toLowerCase();
+    return (
+      contact.name.toLowerCase().includes(searchLower) ||
+      contact.clients?.name.toLowerCase().includes(searchLower) ||
+      contact.email?.toLowerCase().includes(searchLower) ||
+      contact.position?.toLowerCase().includes(searchLower)
+    );
+  });
 
   const handleEdit = (contact: ClientContact) => {
     setEditingContact(contact);

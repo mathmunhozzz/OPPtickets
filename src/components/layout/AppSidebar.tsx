@@ -1,79 +1,88 @@
-import {
-  LayoutDashboard,
-  ListChecks,
-  Users,
-  Activity,
-  FileBarGraph,
-} from "lucide-react";
-import { NavLink } from "react-router-dom";
 
-interface AppSidebarProps {
-  isCollapsed: boolean;
+import React from 'react';
+import { Home, Ticket, Users, BarChart3, UserCheck } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from '@/components/ui/sidebar';
+
+export interface AppSidebarProps {
+  isCollapsed?: boolean;
 }
 
-export const AppSidebar = ({ isCollapsed }: AppSidebarProps) => {
-  const sidebarItems = [
-    {
-      path: "/dashboard",
-      icon: LayoutDashboard,
-      label: "Dashboard",
-    },
-    {
-      path: "/tickets",
-      icon: ListChecks,
-      label: "Tickets",
-    },
-    {
-      path: "/usuarios",
-      icon: Users,
-      label: "Usuários",
-    },
-    {
-      path: "/client-contacts",
-      icon: Users,
-      label: "Funcionários",
-    },
-    {
-      path: "/relatorios",
-      icon: FileBarGraph,
-      label: "Relatórios",
-    },
-    {
-      path: "/activity",
-      icon: Activity,
-      label: "Activity",
-    },
-  ];
+const menuItems = [
+  {
+    title: 'Dashboard',
+    url: '/dashboard',
+    icon: Home,
+  },
+  {
+    title: 'Tickets',
+    url: '/tickets',
+    icon: Ticket,
+  },
+  {
+    title: 'Usuários',
+    url: '/usuarios',
+    icon: Users,
+  },
+  {
+    title: 'Funcionários dos Clientes',
+    url: '/client-contacts',
+    icon: UserCheck,
+  },
+  {
+    title: 'Relatórios',
+    url: '/relatorios',
+    icon: BarChart3,
+  },
+];
+
+export function AppSidebar({ isCollapsed = false }: AppSidebarProps) {
+  const location = useLocation();
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="px-3 py-2 flex-1">
-        <ul className="space-y-1">
-          {sidebarItems.map((item) => (
-            <li key={item.path}>
-              <NavLink
-                to={item.path}
-                className={({ isActive }) =>
-                  `group flex items-center px-2 py-2 text-sm font-medium rounded-md hover:bg-gray-100 hover:text-gray-900 ${
-                    isActive ? "bg-gray-100 text-gray-900" : "text-gray-500"
-                  }`
-                }
-              >
-                <item.icon
-                  className={`shrink-0 h-6 w-6 ${
-                    isCollapsed ? "mr-0" : "mr-3"
-                  } group-hover:text-gray-600 ${
-                    item.path === "/" ? "text-gray-500" : "text-gray-400"
-                  }`}
-                />
-                <span className={`${isCollapsed ? "hidden" : "block"}`}>
-                  {item.label}
-                </span>
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
+    <Sidebar>
+      <SidebarContent className="bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white">
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-slate-200 font-semibold text-lg px-3 py-4">
+            OPPTickets
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {menuItems.map((item) => {
+                const isActive = location.pathname === item.url;
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      className={`
+                        transition-all duration-200 hover:bg-slate-700/50 hover:text-white
+                        ${isActive 
+                          ? 'bg-blue-600/20 text-blue-200 border-r-2 border-blue-400' 
+                          : 'text-slate-300'
+                        }
+                      `}
+                    >
+                      <Link to={item.url} className="flex items-center gap-3 px-3 py-2">
+                        <item.icon className="h-4 w-4" />
+                        {!isCollapsed && <span>{item.title}</span>}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+    </Sidebar>
   );
-};
+}

@@ -1,6 +1,6 @@
+
 import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
@@ -31,7 +31,6 @@ const ProtectedRoutes = () => {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ReactQueryDevtools initialIsOpen={false} />
       <Routes>
         <Route path="/login" element={<Index />} />
         <Route path="/register" element={<Index />} />
