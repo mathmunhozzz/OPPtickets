@@ -131,8 +131,8 @@ export const ClientContactsContent = () => {
       )}
 
       <ClientContactDialog
-        isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
         contact={selectedContact}
       />
     </div>

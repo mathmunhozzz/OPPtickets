@@ -26,7 +26,10 @@ export const useClientContacts = (clientId?: string) => {
     queryFn: async () => {
       console.log('Buscando funcionários dos clientes...');
       
-      let query = supabase
+      // Use untyped supabase to avoid TS errors for a table not present in generated types
+      const sb: any = supabase;
+
+      let query = sb
         .from('funcionarios_clientes')
         .select(`
           *,
@@ -49,7 +52,7 @@ export const useClientContacts = (clientId?: string) => {
         throw error;
       }
 
-      return data as ClientContact[];
+      return (data ?? []) as unknown as ClientContact[];
     },
     enabled: true,
   });
@@ -60,14 +63,15 @@ export const useCreateClientContact = () => {
 
   return useMutation({
     mutationFn: async (contact: Omit<ClientContact, 'id' | 'created_at' | 'updated_at' | 'clients'>) => {
-      const { data, error } = await supabase
+      const sb: any = supabase;
+      const { data, error } = await sb
         .from('funcionarios_clientes')
-        .insert(contact)
+        .insert(contact as any)
         .select()
         .single();
 
       if (error) throw error;
-      return data;
+      return data as unknown as ClientContact;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['client-contacts'] });
@@ -85,15 +89,16 @@ export const useUpdateClientContact = () => {
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<ClientContact> & { id: string }) => {
-      const { data, error } = await supabase
+      const sb: any = supabase;
+      const { data, error } = await sb
         .from('funcionarios_clientes')
-        .update(updates)
+        .update(updates as any)
         .eq('id', id)
         .select()
         .single();
 
       if (error) throw error;
-      return data;
+      return data as unknown as ClientContact;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['client-contacts'] });
@@ -111,12 +116,14 @@ export const useDeleteClientContact = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const sb: any = supabase;
+      const { error } = await sb
         .from('funcionarios_clientes')
-        .update({ is_active: false })
+        .update({ is_active: false } as any)
         .eq('id', id);
 
       if (error) throw error;
+      return id;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['client-contacts'] });
