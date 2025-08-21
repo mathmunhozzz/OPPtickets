@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 export interface ClientContact {
   id: string;
   client_id: string;
+  sector_id?: string;
   name: string;
   email?: string;
   phone?: string;
@@ -18,6 +19,10 @@ export interface ClientContact {
     id: string;
     name: string;
   };
+  sectors?: {
+    id: string;
+    name: string;
+  };
 }
 
 export const useClientContacts = (clientId?: string) => {
@@ -26,7 +31,6 @@ export const useClientContacts = (clientId?: string) => {
     queryFn: async () => {
       console.log('Buscando funcionários dos clientes...');
       
-      // Use untyped supabase to avoid TS errors for a table not present in generated types
       const sb: any = supabase;
 
       let query = sb
@@ -34,6 +38,10 @@ export const useClientContacts = (clientId?: string) => {
         .select(`
           *,
           clients!funcionarios_clientes_client_id_fkey (
+            id,
+            name
+          ),
+          sectors!funcionarios_clientes_sector_id_fkey (
             id,
             name
           )
@@ -62,7 +70,7 @@ export const useCreateClientContact = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (contact: Omit<ClientContact, 'id' | 'created_at' | 'updated_at' | 'clients'>) => {
+    mutationFn: async (contact: Omit<ClientContact, 'id' | 'created_at' | 'updated_at' | 'clients' | 'sectors'>) => {
       const sb: any = supabase;
       const { data, error } = await sb
         .from('funcionarios_clientes')

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Plus, Search, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Building } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,7 +23,8 @@ export const ClientContactsContent = () => {
       contact.name?.toLowerCase().includes(searchLower) ||
       contact.clients?.name?.toLowerCase().includes(searchLower) ||
       contact.email?.toLowerCase().includes(searchLower) ||
-      contact.position?.toLowerCase().includes(searchLower)
+      contact.position?.toLowerCase().includes(searchLower) ||
+      contact.sectors?.name?.toLowerCase().includes(searchLower)
     );
   }) || [];
 
@@ -68,7 +69,7 @@ export const ClientContactsContent = () => {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
-            placeholder="Pesquisar por nome, cliente, email ou cargo..."
+            placeholder="Pesquisar por nome, cliente, email, cargo ou setor..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -81,11 +82,17 @@ export const ClientContactsContent = () => {
           <Card key={contact.id} className="hover:shadow-lg transition-shadow">
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
-                <div>
+                <div className="space-y-1">
                   <CardTitle className="text-lg">{contact.name}</CardTitle>
                   <CardDescription className="font-medium text-blue-600">
                     {contact.clients?.name}
                   </CardDescription>
+                  {contact.sectors && (
+                    <div className="flex items-center gap-1 text-sm text-gray-500">
+                      <Building className="h-3 w-3" />
+                      <span>{contact.sectors.name}</span>
+                    </div>
+                  )}
                 </div>
                 <div className="flex gap-1">
                   <Button
@@ -107,9 +114,14 @@ export const ClientContactsContent = () => {
               </div>
             </CardHeader>
             <CardContent className="space-y-2">
-              {contact.position && (
-                <Badge variant="secondary">{contact.position}</Badge>
-              )}
+              <div className="flex flex-wrap gap-1">
+                {contact.position && (
+                  <Badge variant="secondary">{contact.position}</Badge>
+                )}
+                {contact.sectors && (
+                  <Badge variant="outline">{contact.sectors.name}</Badge>
+                )}
+              </div>
               {contact.email && (
                 <p className="text-sm text-gray-600">{contact.email}</p>
               )}

@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useClients } from '@/hooks/useClients';
+import { useSectors } from '@/hooks/useSectors';
 import { useCreateClientContact, useUpdateClientContact, type ClientContact } from '@/hooks/useClientContacts';
 
 interface ClientContactDialogProps {
@@ -38,6 +39,7 @@ interface ClientContactDialogProps {
 
 interface FormData {
   client_id: string;
+  sector_id: string;
   name: string;
   email: string;
   phone: string;
@@ -52,12 +54,14 @@ export const ClientContactDialog = ({
   defaultClientId 
 }: ClientContactDialogProps) => {
   const { data: clients = [] } = useClients();
+  const { data: sectors = [] } = useSectors();
   const createMutation = useCreateClientContact();
   const updateMutation = useUpdateClientContact();
 
   const form = useForm<FormData>({
     defaultValues: {
       client_id: contact?.client_id || defaultClientId || '',
+      sector_id: contact?.sector_id || '',
       name: contact?.name || '',
       email: contact?.email || '',
       phone: contact?.phone || '',
@@ -70,6 +74,7 @@ export const ClientContactDialog = ({
     if (contact) {
       form.reset({
         client_id: contact.client_id,
+        sector_id: contact.sector_id || '',
         name: contact.name,
         email: contact.email || '',
         phone: contact.phone || '',
@@ -79,6 +84,7 @@ export const ClientContactDialog = ({
     } else {
       form.reset({
         client_id: defaultClientId || '',
+        sector_id: '',
         name: '',
         email: '',
         phone: '',
@@ -91,6 +97,7 @@ export const ClientContactDialog = ({
   const onSubmit = (data: FormData) => {
     const contactData = {
       client_id: data.client_id,
+      sector_id: data.sector_id || undefined,
       name: data.name,
       email: data.email || undefined,
       phone: data.phone || undefined,
@@ -149,6 +156,31 @@ export const ClientContactDialog = ({
                       {clients.map((client) => (
                         <SelectItem key={client.id} value={client.id}>
                           {client.name} {client.municipality && `(${client.municipality})`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="sector_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Setor</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o setor (SIS, SAS, SIE, etc.)" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {sectors.map((sector) => (
+                        <SelectItem key={sector.id} value={sector.id}>
+                          {sector.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
