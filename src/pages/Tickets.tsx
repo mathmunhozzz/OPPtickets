@@ -1,11 +1,14 @@
 
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { TicketBoard } from '@/components/tickets/TicketBoard';
 
 const Tickets = () => {
   return (
     <AuthGuard>
-      <TicketBoard />
+      <AppLayout>
+        <TicketBoard />
+      </AppLayout>
     </AuthGuard>
   );
 };

@@ -34,7 +34,7 @@ const Login = () => {
           toast.error('Erro ao fazer login: ' + error.message);
         }
       } else {
-        navigate('/');
+        navigate('/dashboard');
         toast.success('Login realizado com sucesso!');
       }
     } catch (error) {

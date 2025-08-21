@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { AdminGuard } from '@/components/auth/AdminGuard';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -176,8 +177,8 @@ const Relatorios = () => {
 
   return (
     <AdminGuard>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-        <div className="container mx-auto p-6">
+      <AppLayout>
+        <div className="p-6 space-y-6">
           <div className="mb-6">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
               Relatórios de Tickets
@@ -429,7 +430,7 @@ const Relatorios = () => {
             </Card>
           </div>
         </div>
-      </div>
+      </AppLayout>
     </AdminGuard>
   );
 };

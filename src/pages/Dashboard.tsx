@@ -1,5 +1,6 @@
 
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -62,24 +63,20 @@ const Dashboard = () => {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-        <div className="backdrop-blur-sm bg-white/30 border-b border-white/20 p-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 rounded-lg bg-primary/10 backdrop-blur-sm">
-                <TrendingUp className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-                  Dashboard
-                </h1>
-                <p className="text-muted-foreground">Visão geral do sistema de tickets</p>
-              </div>
+      <AppLayout>
+        <div className="p-6 space-y-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 rounded-lg bg-primary/10 backdrop-blur-sm">
+              <TrendingUp className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+                Dashboard
+              </h1>
+              <p className="text-muted-foreground">Visão geral do sistema de tickets</p>
             </div>
           </div>
-        </div>
 
-        <div className="p-6 max-w-7xl mx-auto space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {stats.map((stat, index) => (
               <Card 
@@ -129,7 +126,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </AppLayout>
     </AuthGuard>
   );
 };
