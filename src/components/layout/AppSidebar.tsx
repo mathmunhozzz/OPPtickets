@@ -1,87 +1,79 @@
-import { Home, Ticket, LogOut, Users, BarChart3 } from 'lucide-react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { useUserRole } from '@/hooks/useUserRole';
-import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter } from '@/components/ui/sidebar';
-const menuItems = [{
-  title: 'Dashboard',
-  url: '/',
-  icon: Home
-}, {
-  title: 'Tickets',
-  url: '/tickets',
-  icon: Ticket
-}];
-export function AppSidebar() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const {
-    signOut
-  } = useAuth();
-  const {
-    data: userRole
-  } = useUserRole();
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/login');
-  };
-  const isActive = (url: string) => location.pathname === url;
-  const canViewUsers = userRole === 'admin' || userRole === 'manager';
-  return <Sidebar className="border-r border-white/20 bg-white/70 backdrop-blur-lg">
-      <SidebarHeader className="border-b border-white/20 px-6 py-4">
-        <div className="flex items-center gap-2">
-          
-          <h2 className="text-lg font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-            OPPTickets
-          </h2>
-        </div>
-      </SidebarHeader>
-      
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-slate-600">Menu Principal</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {menuItems.map(item => <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild className={`transition-all duration-200 ${isActive(item.url) ? 'bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 shadow-sm' : 'hover:bg-white/50'}`}>
-                    <Link to={item.url} className="flex items-center gap-3">
-                      <item.icon className="h-4 w-4" />
-                      <span className="font-medium">{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>)}
-              
-              {canViewUsers && <SidebarMenuItem>
-                  <SidebarMenuButton asChild className={`transition-all duration-200 ${isActive('/usuarios') ? 'bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 shadow-sm' : 'hover:bg-white/50'}`}>
-                    <Link to="/usuarios" className="flex items-center gap-3">
-                      <Users className="h-4 w-4" />
-                      <span className="font-medium">Usuários</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>}
-              
-              {canViewUsers && <SidebarMenuItem>
-                  <SidebarMenuButton asChild className={`transition-all duration-200 ${isActive('/relatorios') ? 'bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 shadow-sm' : 'hover:bg-white/50'}`}>
-                    <Link to="/relatorios" className="flex items-center gap-3">
-                      <BarChart3 className="h-4 w-4" />
-                      <span className="font-medium">Relatórios</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
+import {
+  LayoutDashboard,
+  ListChecks,
+  Users,
+  Activity,
+  FileBarGraph,
+} from "lucide-react";
+import { NavLink } from "react-router-dom";
 
-      <SidebarFooter className="border-t border-white/20 p-4">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleSignOut} className="text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors">
-              <LogOut className="h-4 w-4" />
-              <span className="font-medium">Sair</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
-    </Sidebar>;
+interface AppSidebarProps {
+  isCollapsed: boolean;
 }
+
+export const AppSidebar = ({ isCollapsed }: AppSidebarProps) => {
+  const sidebarItems = [
+    {
+      path: "/dashboard",
+      icon: LayoutDashboard,
+      label: "Dashboard",
+    },
+    {
+      path: "/tickets",
+      icon: ListChecks,
+      label: "Tickets",
+    },
+    {
+      path: "/usuarios",
+      icon: Users,
+      label: "Usuários",
+    },
+    {
+      path: "/client-contacts",
+      icon: Users,
+      label: "Funcionários",
+    },
+    {
+      path: "/relatorios",
+      icon: FileBarGraph,
+      label: "Relatórios",
+    },
+    {
+      path: "/activity",
+      icon: Activity,
+      label: "Activity",
+    },
+  ];
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="px-3 py-2 flex-1">
+        <ul className="space-y-1">
+          {sidebarItems.map((item) => (
+            <li key={item.path}>
+              <NavLink
+                to={item.path}
+                className={({ isActive }) =>
+                  `group flex items-center px-2 py-2 text-sm font-medium rounded-md hover:bg-gray-100 hover:text-gray-900 ${
+                    isActive ? "bg-gray-100 text-gray-900" : "text-gray-500"
+                  }`
+                }
+              >
+                <item.icon
+                  className={`shrink-0 h-6 w-6 ${
+                    isCollapsed ? "mr-0" : "mr-3"
+                  } group-hover:text-gray-600 ${
+                    item.path === "/" ? "text-gray-500" : "text-gray-400"
+                  }`}
+                />
+                <span className={`${isCollapsed ? "hidden" : "block"}`}>
+                  {item.label}
+                </span>
+              </NavLink>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+};

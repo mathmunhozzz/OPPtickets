@@ -1,70 +1,44 @@
-
-import React from 'react';
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AppLayout } from "@/components/layout/AppLayout";
-import { AuthGuard } from "@/components/auth/AuthGuard";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { Routes, Route } from "react-router-dom";
+import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Tickets from "./pages/Tickets";
 import Usuarios from "./pages/Usuarios";
-import Relatorios from "./pages/Relatorios";
-import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import Relatorios from "./pages/Relatorios";
+import "./App.css";
+import { AuthGuard } from "./components/auth/AuthGuard";
+import ClientContacts from "./pages/ClientContacts";
 
-// Create query client outside component to avoid re-creation
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000,
-      gcTime: 10 * 60 * 1000,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: true,
-      retry: 2,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
 const ProtectedRoutes = () => {
   return (
-    <AppLayout>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/tickets" element={<Tickets />} />
-        <Route path="/usuarios" element={<Usuarios />} />
-        <Route path="/relatorios" element={<Relatorios />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </AppLayout>
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/tickets" element={<Tickets />} />
+      <Route path="/usuarios" element={<Usuarios />} />
+      <Route path="/client-contacts" element={<ClientContacts />} />
+      <Route path="/relatorios" element={<Relatorios />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 };
 
-const App = () => {
-  console.log('App rendering');
-  
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route 
-              path="/*" 
-              element={
-                <AuthGuard>
-                  <ProtectedRoutes />
-                </AuthGuard>
-              } 
-            />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <ReactQueryDevtools initialIsOpen={false} />
+      <Routes>
+        <Route path="/login" element={<Index />} />
+        <Route path="/register" element={<Index />} />
+        <Route path="*" element={<AuthGuard><ProtectedRoutes /></AuthGuard>} />
+      </Routes>
     </QueryClientProvider>
   );
-};
+}
 
 export default App;
