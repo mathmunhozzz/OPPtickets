@@ -8,7 +8,7 @@ import Tickets from "./pages/Tickets";
 import Usuarios from "./pages/Usuarios";
 import NotFound from "./pages/NotFound";
 import Relatorios from "./pages/Relatorios";
-import "./App.css";
+
 import { AuthGuard } from "./components/auth/AuthGuard";
 import ClientContacts from "./pages/ClientContacts";
 
