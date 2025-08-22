@@ -26,6 +26,16 @@ export const useTickets = () => {
             id,
             name,
             email
+          ),
+          funcionarios_clientes!tickets_client_contact_id_fkey (
+            id,
+            name,
+            email,
+            position,
+            clients:client_id (
+              id,
+              name
+            )
           )
         `)
         .order('created_at', { ascending: false });

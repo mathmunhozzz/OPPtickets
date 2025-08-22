@@ -183,6 +183,18 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
               </div>
             )}
 
+            {ticket.funcionarios_clientes && (
+              <div className="flex items-center gap-2 text-xs text-slate-600">
+                <div className="p-1 rounded bg-orange-100">
+                  <User className="h-3 w-3 text-orange-600" />
+                </div>
+                <span className="font-medium">
+                  Cliente: {ticket.funcionarios_clientes.name}
+                  {ticket.funcionarios_clientes.clients?.name && ` (${ticket.funcionarios_clientes.clients.name})`}
+                </span>
+              </div>
+            )}
+
             <div className="flex items-center gap-2 text-xs text-slate-600">
               <div className="p-1 rounded bg-green-100">
                 <User className="h-3 w-3 text-green-600" />

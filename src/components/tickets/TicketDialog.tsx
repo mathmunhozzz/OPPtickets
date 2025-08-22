@@ -200,6 +200,17 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
                       <span className="font-semibold text-blue-600">{getCreatorName()}</span>
                     </div>
 
+                    {ticket.funcionarios_clientes && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">Funcionário do Cliente:</span>
+                        <span className="font-semibold text-orange-600">
+                          {ticket.funcionarios_clientes.name}
+                          {ticket.funcionarios_clientes.clients?.name && ` (${ticket.funcionarios_clientes.clients.name})`}
+                        </span>
+                      </div>
+                    )}
+
                     {ticket.sectors?.name && (
                       <div className="flex items-center gap-2 text-sm">
                         <Tag className="h-4 w-4 text-muted-foreground" />

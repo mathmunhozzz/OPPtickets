@@ -176,6 +176,63 @@ export type Database = {
         }
         Relationships: []
       }
+      funcionarios_clientes: {
+        Row: {
+          client_id: string
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          phone: string | null
+          position: string | null
+          sector_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          phone?: string | null
+          position?: string | null
+          sector_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          position?: string | null
+          sector_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funcionarios_clientes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funcionarios_clientes_sector_id_fkey"
+            columns: ["sector_id"]
+            isOneToOne: false
+            referencedRelation: "sectors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_logs: {
         Row: {
           error_message: string | null
@@ -371,6 +428,7 @@ export type Database = {
       tickets: {
         Row: {
           assigned_to: string | null
+          client_contact_id: string | null
           created_at: string
           created_by: string
           description: string | null
@@ -385,6 +443,7 @@ export type Database = {
         }
         Insert: {
           assigned_to?: string | null
+          client_contact_id?: string | null
           created_at?: string
           created_by: string
           description?: string | null
@@ -399,6 +458,7 @@ export type Database = {
         }
         Update: {
           assigned_to?: string | null
+          client_contact_id?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
@@ -417,6 +477,13 @@ export type Database = {
             columns: ["assigned_to"]
             isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_client_contact_id_fkey"
+            columns: ["client_contact_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios_clientes"
             referencedColumns: ["id"]
           },
           {

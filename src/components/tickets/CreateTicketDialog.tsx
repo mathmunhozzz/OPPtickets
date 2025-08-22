@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { useClientContactsForTickets } from '@/hooks/useClientContactsForTickets';
 
 interface CreateTicketDialogProps {
   open: boolean;
@@ -23,6 +24,7 @@ export const CreateTicketDialog = ({ open, onOpenChange, userSectors, onSuccess 
     title: '',
     description: '',
     sector_id: '',
+    client_contact_id: '',
     priority: 'media',
     tags: ''
   });
@@ -41,6 +43,9 @@ export const CreateTicketDialog = ({ open, onOpenChange, userSectors, onSuccess 
     }
   });
 
+  // Buscar funcionários dos clientes
+  const { data: clientContacts } = useClientContactsForTickets();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -52,6 +57,7 @@ export const CreateTicketDialog = ({ open, onOpenChange, userSectors, onSuccess 
         title: formData.title,
         description: formData.description || null,
         sector_id: formData.sector_id || null,
+        client_contact_id: formData.client_contact_id || null,
         priority: formData.priority,
         tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : [],
         created_by: user.data.user?.id as string,
@@ -69,6 +75,7 @@ export const CreateTicketDialog = ({ open, onOpenChange, userSectors, onSuccess 
         title: '',
         description: '',
         sector_id: '',
+        client_contact_id: '',
         priority: 'media',
         tags: ''
       });
@@ -125,6 +132,23 @@ export const CreateTicketDialog = ({ open, onOpenChange, userSectors, onSuccess 
                       {sector.name}
                     </SelectItem>
                   ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Funcionário do Cliente</Label>
+            <Select value={formData.client_contact_id} onValueChange={(value) => setFormData(prev => ({ ...prev, client_contact_id: value }))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um funcionário do cliente (opcional)" />
+              </SelectTrigger>
+              <SelectContent>
+                {clientContacts?.map((contact) => (
+                  <SelectItem key={contact.id} value={contact.id}>
+                    {contact.name} - {contact.clients?.name}
+                    {contact.position && ` (${contact.position})`}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
