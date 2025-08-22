@@ -13,6 +13,7 @@ import { CSS } from '@dnd-kit/utilities';
 
 interface MemoizedTicketCardProps {
   ticket: any;
+  compact?: boolean;
   onRefetch: () => void;
 }
 
@@ -22,7 +23,7 @@ const priorityColors = {
   alta: 'from-red-500 to-red-600'
 };
 
-const TicketCardComponent = ({ ticket, onRefetch }: MemoizedTicketCardProps) => {
+const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTicketCardProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   
@@ -38,6 +39,78 @@ const TicketCardComponent = ({ ticket, onRefetch }: MemoizedTicketCardProps) => 
   const getCreatorName = () => {
     return ticket.creator_name || 'Usuário';
   };
+
+  // Renderização compacta
+  if (compact) {
+    return (
+      <>
+        <Card 
+          ref={setNodeRef}
+          style={style}
+          className={`group relative cursor-pointer hover:shadow-md transition-all duration-200 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 ${
+            isDragging ? 'opacity-50 rotate-6 z-50' : ''
+          }`}
+          onClick={() => setDialogOpen(true)}
+        >
+          {/* Action Buttons - Compact */}
+          <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeleteDialogOpen(true);
+              }}
+            >
+              <Trash2 className="h-2.5 w-2.5" />
+            </Button>
+            
+            <div
+              {...attributes}
+              {...listeners}
+              className="p-0.5 rounded cursor-grab active:cursor-grabbing bg-slate-100 hover:bg-slate-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <GripVertical className="h-3 w-3 text-slate-500" />
+            </div>
+          </div>
+          
+          <CardContent className="p-2 pr-12">
+            <div className="flex items-center justify-between mb-1">
+              <h4 className="font-medium text-xs line-clamp-1 text-slate-800">
+                {ticket.title}
+              </h4>
+              <Badge 
+                className={`text-xs font-medium text-white bg-gradient-to-r ${priorityColors[ticket.priority || 'media']} px-1 py-0.5`}
+              >
+                {ticket.priority === 'baixa' ? 'B' : ticket.priority === 'media' ? 'M' : 'A'}
+              </Badge>
+            </div>
+            
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span className="truncate">{getCreatorName()}</span>
+              <span>{format(new Date(ticket.created_at), 'dd/MM', { locale: ptBR })}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <TicketDialog
+          ticket={ticket}
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          onRefetch={onRefetch}
+        />
+
+        <DeleteTicketDialog
+          ticket={ticket}
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          onRefetch={onRefetch}
+        />
+      </>
+    );
+  }
 
   return (
     <>
@@ -174,7 +247,8 @@ export const MemoizedTicketCard = memo(TicketCardComponent, (prevProps, nextProp
     prevProps.ticket.id === nextProps.ticket.id &&
     prevProps.ticket.status === nextProps.ticket.status &&
     prevProps.ticket.title === nextProps.ticket.title &&
-    prevProps.ticket.updated_at === nextProps.ticket.updated_at
+    prevProps.ticket.updated_at === nextProps.ticket.updated_at &&
+    prevProps.compact === nextProps.compact
   );
 });
 

@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Plus, Ticket as TicketIcon } from 'lucide-react';
+import { Plus, Ticket as TicketIcon, Search } from 'lucide-react';
 import { MemoizedTicketColumn } from './MemoizedTicketColumn';
 import { CreateTicketDialog } from './CreateTicketDialog';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +24,17 @@ export const TicketBoard = () => {
   const [selectedSector, setSelectedSector] = useState<string>('all');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [activeTicket, setActiveTicket] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [assigneeFilter, setAssigneeFilter] = useState<string>('all');
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'priority'>('newest');
+  const [compactMode, setCompactMode] = useState(false);
+  const [visibleCount, setVisibleCount] = useState<Record<string, number>>({
+    pendente: 10,
+    em_analise: 10,
+    corrigido: 10,
+    negado: 10
+  });
   const queryClient = useQueryClient();
 
   const sensors = useSensors(
@@ -100,12 +111,47 @@ export const TicketBoard = () => {
     staleTime: 30 * 1000, // 30 seconds
   });
 
-  // Filtrar tickets por setor selecionado (memoizado)
+  // Filtrar e ordenar tickets (memoizado)
   const tickets = useMemo(() => {
-    return selectedSector === 'all' 
+    let filtered = selectedSector === 'all' 
       ? allTickets 
       : allTickets?.filter(ticket => ticket.sector_id === selectedSector);
-  }, [allTickets, selectedSector]);
+    
+    if (!filtered) return [];
+
+    // Filtro de busca
+    if (searchTerm) {
+      filtered = filtered.filter(ticket => 
+        ticket.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ticket.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Filtro de prioridade
+    if (priorityFilter !== 'all') {
+      filtered = filtered.filter(ticket => ticket.priority === priorityFilter);
+    }
+
+    // Filtro de responsável
+    if (assigneeFilter !== 'all') {
+      filtered = filtered.filter(ticket => ticket.assigned_to === assigneeFilter);
+    }
+
+    // Ordenação
+    switch (sortOrder) {
+      case 'oldest':
+        filtered.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        break;
+      case 'priority':
+        const priorityOrder = { alta: 3, media: 2, baixa: 1 };
+        filtered.sort((a, b) => (priorityOrder[b.priority as keyof typeof priorityOrder] || 0) - (priorityOrder[a.priority as keyof typeof priorityOrder] || 0));
+        break;
+      default: // newest
+        filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    }
+
+    return filtered;
+  }, [allTickets, selectedSector, searchTerm, priorityFilter, assigneeFilter, sortOrder]);
 
   // Debounced refetch for performance
   const debouncedRefetch = useDebounce(refetch, 500);
@@ -145,6 +191,29 @@ export const TicketBoard = () => {
       return acc;
     }, {} as Record<string, any[]>) || {};
   }, [tickets]);
+
+  // Função para carregar mais tickets em uma coluna
+  const loadMoreTickets = (status: string) => {
+    setVisibleCount(prev => ({
+      ...prev,
+      [status]: prev[status] + 10
+    }));
+  };
+
+  // Função para resetar contadores ao filtrar
+  const resetVisibleCounts = () => {
+    setVisibleCount({
+      pendente: 10,
+      em_analise: 10,
+      corrigido: 10,
+      negado: 10
+    });
+  };
+
+  // Reset contadores quando filtros mudam
+  useEffect(() => {
+    resetVisibleCounts();
+  }, [searchTerm, priorityFilter, assigneeFilter, selectedSector]);
 
   const handleDragStart = (event: DragStartEvent) => {
     const ticket = tickets?.find(t => t.id === event.active.id);
@@ -233,7 +302,7 @@ const handleDragEnd = async (event: DragEndEvent) => {
       onDragEnd={handleDragEnd}
     >
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-          <div className="backdrop-blur-sm bg-white/30 border-b border-white/20 p-4 sm:p-6">
+        <div className="backdrop-blur-sm bg-white/30 border-b border-white/20 p-4 sm:p-6">
             <div className="max-w-7xl mx-auto">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div className="flex items-center gap-3">
@@ -253,6 +322,64 @@ const handleDragEnd = async (event: DragEndEvent) => {
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Novo Ticket
+                </Button>
+              </div>
+              
+              {/* Filtros e controles */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Buscar tickets..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-white/50 backdrop-blur-sm border border-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  />
+                </div>
+                
+                <select
+                  value={priorityFilter}
+                  onChange={(e) => setPriorityFilter(e.target.value)}
+                  className="px-3 py-2 text-sm bg-white/50 backdrop-blur-sm border border-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                >
+                  <option value="all">Todas prioridades</option>
+                  <option value="alta">Alta</option>
+                  <option value="media">Média</option>
+                  <option value="baixa">Baixa</option>
+                </select>
+                
+                <select
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value as any)}
+                  className="px-3 py-2 text-sm bg-white/50 backdrop-blur-sm border border-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                >
+                  <option value="newest">Mais recente</option>
+                  <option value="oldest">Mais antigo</option>
+                  <option value="priority">Prioridade</option>
+                </select>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCompactMode(!compactMode)}
+                  className="bg-white/50 backdrop-blur-sm border-white/30"
+                >
+                  {compactMode ? 'Expandir' : 'Compacto'}
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setPriorityFilter('all');
+                    setAssigneeFilter('all');
+                    setSortOrder('newest');
+                    resetVisibleCounts();
+                  }}
+                  className="bg-white/50 backdrop-blur-sm border-white/30"
+                >
+                  Limpar
                 </Button>
               </div>
 
@@ -297,15 +424,18 @@ const handleDragEnd = async (event: DragEndEvent) => {
                   </div>
 
                   <TabsContent value={selectedSector} className="mt-0">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 h-[calc(100vh-400px)]">
                       {Object.entries(statusConfig).map(([status, config]) => (
                         <MemoizedTicketColumn
                           key={status}
                           status={status}
                           title={config.label}
                           tickets={ticketsByStatus[status] || []}
+                          visibleCount={visibleCount[status]}
+                          onLoadMore={() => loadMoreTickets(status)}
                           color={config.color}
                           bgColor={config.bgColor}
+                          compactMode={compactMode}
                           onRefetch={refetch}
                         />
                       ))}

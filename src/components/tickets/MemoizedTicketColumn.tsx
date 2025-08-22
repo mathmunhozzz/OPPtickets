@@ -5,19 +5,25 @@ interface MemoizedTicketColumnProps {
   status: string;
   title: string;
   tickets: any[];
+  visibleCount: number;
+  onLoadMore: () => void;
   color: string;
   bgColor: string;
+  compactMode: boolean;
   onRefetch: () => void;
 }
 
-export const MemoizedTicketColumn = memo(({ status, title, tickets, color, bgColor, onRefetch }: MemoizedTicketColumnProps) => {
+export const MemoizedTicketColumn = memo(({ status, title, tickets, visibleCount, onLoadMore, color, bgColor, compactMode, onRefetch }: MemoizedTicketColumnProps) => {
   return (
     <TicketColumn
       status={status}
       title={title}
       tickets={tickets}
+      visibleCount={visibleCount}
+      onLoadMore={onLoadMore}
       color={color}
       bgColor={bgColor}
+      compactMode={compactMode}
       onRefetch={onRefetch}
     />
   );
@@ -29,6 +35,8 @@ export const MemoizedTicketColumn = memo(({ status, title, tickets, color, bgCol
   return (
     prevProps.status === nextProps.status &&
     prevProps.title === nextProps.title &&
+    prevProps.visibleCount === nextProps.visibleCount &&
+    prevProps.compactMode === nextProps.compactMode &&
     prevTicketIds.length === nextTicketIds.length &&
     prevTicketIds.every((id, index) => id === nextTicketIds[index])
   );
