@@ -138,16 +138,13 @@ export const TicketBoard = () => {
     }
 
     // Ordenação
-    switch (sortOrder) {
-      case 'oldest':
-        filtered.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-        break;
-      case 'priority':
-        const priorityOrder = { alta: 3, media: 2, baixa: 1 };
-        filtered.sort((a, b) => (priorityOrder[b.priority as keyof typeof priorityOrder] || 0) - (priorityOrder[a.priority as keyof typeof priorityOrder] || 0));
-        break;
-      default: // newest
-        filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    if (sortOrder === 'oldest') {
+      filtered = [...filtered].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    } else if (sortOrder === 'priority') {
+      const priorityOrder = { alta: 3, media: 2, baixa: 1 };
+      filtered = [...filtered].sort((a, b) => (priorityOrder[b.priority as keyof typeof priorityOrder] || 0) - (priorityOrder[a.priority as keyof typeof priorityOrder] || 0));
+    } else { // newest
+      filtered = [...filtered].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }
 
     return filtered;
