@@ -4,6 +4,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { MemoizedTicketCard } from './MemoizedTicketCard';
 import { useDroppable } from '@dnd-kit/core';
+import { useRef, useEffect, useState } from 'react';
 
 interface TicketColumnProps {
   status: string;
@@ -21,9 +22,42 @@ export const TicketColumn = ({ status, title, tickets, visibleCount, onLoadMore,
   const { isOver, setNodeRef } = useDroppable({
     id: status,
   });
+  
+  const [autoLoadEnabled, setAutoLoadEnabled] = useState(true);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const visibleTickets = tickets.slice(0, visibleCount);
   const hasMore = tickets.length > visibleCount;
+
+  // Infinite scroll com Intersection Observer
+  useEffect(() => {
+    if (!autoLoadEnabled || !hasMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && hasMore) {
+          onLoadMore();
+        }
+      },
+      {
+        root: scrollAreaRef.current,
+        rootMargin: '100px',
+        threshold: 0.1,
+      }
+    );
+
+    if (sentinelRef.current) {
+      observer.observe(sentinelRef.current);
+    }
+
+    return () => {
+      if (sentinelRef.current) {
+        observer.unobserve(sentinelRef.current);
+      }
+    };
+  }, [hasMore, onLoadMore, autoLoadEnabled]);
 
   return (
     <Card 
@@ -43,7 +77,7 @@ export const TicketColumn = ({ status, title, tickets, visibleCount, onLoadMore,
       </CardHeader>
       
       <CardContent className="flex-1 min-h-0 p-3">
-        <ScrollArea className="h-full">
+        <ScrollArea className="h-full" ref={scrollAreaRef}>
           <div className="space-y-3 pr-3">
             {visibleTickets.map((ticket, index) => (
               <div 
@@ -59,15 +93,32 @@ export const TicketColumn = ({ status, title, tickets, visibleCount, onLoadMore,
               </div>
             ))}
             
+            {/* Sentinel para infinite scroll */}
+            {hasMore && autoLoadEnabled && (
+              <div ref={sentinelRef} className="h-4" />
+            )}
+            
             {hasMore && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onLoadMore}
-                className="w-full mt-2 text-xs bg-white/50 hover:bg-white/80"
-              >
-                Carregar mais ({tickets.length - visibleCount} restantes)
-              </Button>
+              <div className="space-y-2">
+                {!autoLoadEnabled && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onLoadMore}
+                    className="w-full text-xs bg-white/50 hover:bg-white/80"
+                  >
+                    Carregar mais ({tickets.length - visibleCount} restantes)
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setAutoLoadEnabled(!autoLoadEnabled)}
+                  className="w-full text-xs text-muted-foreground hover:text-foreground"
+                >
+                  {autoLoadEnabled ? 'Desabilitar carregamento automático' : 'Habilitar carregamento automático'}
+                </Button>
+              </div>
             )}
             
             {tickets.length === 0 && (
