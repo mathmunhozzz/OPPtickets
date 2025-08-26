@@ -11,9 +11,27 @@ interface MemoizedTicketColumnProps {
   bgColor: string;
   compactMode: boolean;
   onRefetch: () => void;
+  groupBy?: 'none' | 'priority' | 'assignee' | 'client';
+  groupedTickets?: Record<string, any[]>;
+  collapsedGroups?: Record<string, boolean>;
+  onToggleGroup?: (groupKey: string) => void;
 }
 
-export const MemoizedTicketColumn = memo(({ status, title, tickets, visibleCount, onLoadMore, color, bgColor, compactMode, onRefetch }: MemoizedTicketColumnProps) => {
+export const MemoizedTicketColumn = memo(({ 
+  status, 
+  title, 
+  tickets, 
+  visibleCount, 
+  onLoadMore, 
+  color, 
+  bgColor, 
+  compactMode, 
+  onRefetch,
+  groupBy = 'none',
+  groupedTickets = {},
+  collapsedGroups = {},
+  onToggleGroup
+}: MemoizedTicketColumnProps) => {
   return (
     <TicketColumn
       status={status}
@@ -25,6 +43,10 @@ export const MemoizedTicketColumn = memo(({ status, title, tickets, visibleCount
       bgColor={bgColor}
       compactMode={compactMode}
       onRefetch={onRefetch}
+      groupBy={groupBy}
+      groupedTickets={groupedTickets}
+      collapsedGroups={collapsedGroups}
+      onToggleGroup={onToggleGroup}
     />
   );
 }, (prevProps, nextProps) => {
@@ -37,6 +59,7 @@ export const MemoizedTicketColumn = memo(({ status, title, tickets, visibleCount
     prevProps.title === nextProps.title &&
     prevProps.visibleCount === nextProps.visibleCount &&
     prevProps.compactMode === nextProps.compactMode &&
+    prevProps.groupBy === nextProps.groupBy &&
     prevTicketIds.length === nextTicketIds.length &&
     prevTicketIds.every((id, index) => id === nextTicketIds[index])
   );

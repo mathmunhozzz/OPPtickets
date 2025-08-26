@@ -17,6 +17,13 @@ interface MemoizedTicketCardProps {
   onRefetch: () => void;
 }
 
+const getAssigneeInitials = (name: string) => {
+  if (!name) return '?';
+  const words = name.split(' ');
+  if (words.length === 1) return words[0].substring(0, 2).toUpperCase();
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+};
+
 const priorityColors = {
   baixa: 'from-green-500 to-green-600',
   media: 'from-yellow-500 to-yellow-600',
@@ -47,8 +54,10 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
         <Card 
           ref={setNodeRef}
           style={style}
-          className={`group relative cursor-pointer hover:shadow-md transition-all duration-200 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 ${
-            isDragging ? 'opacity-50 rotate-6 z-50' : ''
+          className={`group relative cursor-pointer hover:shadow-md transition-all duration-200 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 border-l-4 border-l-gradient-to-b ${
+            priorityColors[ticket.priority || 'media'].replace('from-', 'border-l-').replace(' to-', '')
+          } ${isDragging ? 'opacity-50 rotate-6 z-50' : ''} ${
+            ticket.isRecentlyUpdated ? 'animate-pulse ring-2 ring-blue-300' : ''
           }`}
           onClick={() => setDialogOpen(true)}
         >
@@ -89,7 +98,14 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
             </div>
             
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span className="truncate">{getCreatorName()}</span>
+              <div className="flex items-center gap-1">
+                {ticket.employees?.name && (
+                  <div className="w-4 h-4 rounded-full bg-blue-500 text-white text-xs flex items-center justify-center font-bold">
+                    {getAssigneeInitials(ticket.employees.name)}
+                  </div>
+                )}
+                <span className="truncate">{getCreatorName()}</span>
+              </div>
               <span>{format(new Date(ticket.created_at), 'dd/MM', { locale: ptBR })}</span>
             </div>
           </CardContent>
@@ -117,8 +133,10 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
       <Card 
         ref={setNodeRef}
         style={style}
-        className={`group relative cursor-pointer hover:shadow-lg transition-all duration-300 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 hover:scale-[1.02] ${
-          isDragging ? 'opacity-50 rotate-6 z-50' : ''
+        className={`group relative cursor-pointer hover:shadow-lg transition-all duration-300 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 hover:scale-[1.02] border-l-4 ${
+          priorityColors[ticket.priority || 'media'].replace('from-', 'border-l-').replace(' to-', '').replace('-500', '-400')
+        } ${isDragging ? 'opacity-50 rotate-6 z-50' : ''} ${
+          ticket.isRecentlyUpdated ? 'animate-pulse ring-2 ring-blue-300' : ''
         }`}
         onClick={() => setDialogOpen(true)}
       >
@@ -148,11 +166,18 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
         
         <CardContent className="p-4 space-y-3 pr-16">
           <div className="flex items-start justify-between">
-            <h4 className="font-semibold text-sm line-clamp-2 text-slate-800 leading-relaxed">
-              {ticket.title}
-            </h4>
+            <div className="flex items-start gap-2 flex-1">
+              {ticket.employees?.name && (
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white text-xs flex items-center justify-center font-bold shadow-sm">
+                  {getAssigneeInitials(ticket.employees.name)}
+                </div>
+              )}
+              <h4 className="font-semibold text-sm line-clamp-2 text-slate-800 leading-relaxed flex-1">
+                {ticket.title}
+              </h4>
+            </div>
             <Badge 
-              className={`text-xs font-medium text-white bg-gradient-to-r ${priorityColors[ticket.priority || 'media']} shadow-sm`}
+              className={`text-xs font-medium text-white bg-gradient-to-r ${priorityColors[ticket.priority || 'media']} shadow-sm ml-2`}
             >
               {ticket.priority === 'baixa' ? 'Baixa' : ticket.priority === 'media' ? 'Média' : 'Alta'}
             </Badge>

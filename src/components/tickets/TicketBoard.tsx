@@ -3,13 +3,15 @@ import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Plus, Ticket as TicketIcon, Search } from 'lucide-react';
+import { Plus, Ticket as TicketIcon } from 'lucide-react';
 import { MemoizedTicketColumn } from './MemoizedTicketColumn';
 import { CreateTicketDialog } from './CreateTicketDialog';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
 import { MemoizedTicketCard } from './MemoizedTicketCard';
+import { TicketQuickFilters } from './TicketQuickFilters';
+import { GroupHeader } from './GroupHeader';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 
@@ -27,8 +29,14 @@ export const TicketBoard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [assigneeFilter, setAssigneeFilter] = useState<string>('all');
-  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'priority'>('newest');
+  const [clientContactFilter, setClientContactFilter] = useState<string>('all');
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'priority' | 'updated'>('newest');
+  const [groupBy, setGroupBy] = useState<'none' | 'priority' | 'assignee' | 'client'>('none');
   const [compactMode, setCompactMode] = useState(false);
+  const [hideEmptyColumns, setHideEmptyColumns] = useState(false);
+  const [showMyTickets, setShowMyTickets] = useState(false);
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState<Record<string, number>>({
     pendente: 10,
     em_analise: 10,
@@ -36,6 +44,15 @@ export const TicketBoard = () => {
     negado: 10
   });
   const queryClient = useQueryClient();
+
+  // Get current user ID
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUserId(user?.id || null);
+    };
+    getCurrentUser();
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -73,7 +90,7 @@ export const TicketBoard = () => {
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 
-  // Buscar tickets com relações otimizadas
+  // Buscar tickets com relações otimizadas incluindo funcionarios_clientes
   const { data: allTickets, refetch } = useQuery({
     queryKey: ['visible-tickets'],
     queryFn: async () => {
@@ -83,7 +100,12 @@ export const TicketBoard = () => {
         .select(`
           *,
           sectors:sector_id (id, name),
-          employees:assigned_to (id, name)
+          employees:assigned_to (id, name),
+          funcionarios_clientes:client_contact_id (
+            id,
+            name,
+            clients:client_id (id, name)
+          )
         `)
         .order('created_at', { ascending: false });
       
@@ -103,7 +125,8 @@ export const TicketBoard = () => {
       // Combinar os dados
       const processedTickets = ticketsData.map(ticket => ({
         ...ticket,
-        creator_name: creatorNameMap.get(ticket.id) || 'Usuário'
+        creator_name: creatorNameMap.get(ticket.id) || 'Usuário',
+        isRecentlyUpdated: new Date(ticket.updated_at).getTime() > Date.now() - (5 * 60 * 1000) // 5 minutes
       }));
       
       return processedTickets;
@@ -119,11 +142,22 @@ export const TicketBoard = () => {
     
     if (!filtered) return [];
 
+    // Filtro "Meus Tickets"
+    if (showMyTickets && currentUserId) {
+      filtered = filtered.filter(ticket => {
+        // Check if user created the ticket
+        return ticket.created_by === currentUserId;
+      });
+    }
+
     // Filtro de busca
     if (searchTerm) {
       filtered = filtered.filter(ticket => 
         ticket.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ticket.description?.toLowerCase().includes(searchTerm.toLowerCase())
+        ticket.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ticket.employees?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ticket.funcionarios_clientes?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ticket.funcionarios_clientes?.clients?.name?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -134,12 +168,23 @@ export const TicketBoard = () => {
 
     // Filtro de responsável
     if (assigneeFilter !== 'all') {
-      filtered = filtered.filter(ticket => ticket.assigned_to === assigneeFilter);
+      if (assigneeFilter === 'unassigned') {
+        filtered = filtered.filter(ticket => !ticket.assigned_to);
+      } else {
+        filtered = filtered.filter(ticket => ticket.assigned_to === assigneeFilter);
+      }
+    }
+
+    // Filtro de funcionário cliente
+    if (clientContactFilter !== 'all') {
+      filtered = filtered.filter(ticket => ticket.client_contact_id === clientContactFilter);
     }
 
     // Ordenação
     if (sortOrder === 'oldest') {
       filtered = [...filtered].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    } else if (sortOrder === 'updated') {
+      filtered = [...filtered].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
     } else if (sortOrder === 'priority') {
       const priorityOrder = { alta: 3, media: 2, baixa: 1 };
       filtered = [...filtered].sort((a, b) => (priorityOrder[b.priority as keyof typeof priorityOrder] || 0) - (priorityOrder[a.priority as keyof typeof priorityOrder] || 0));
@@ -148,7 +193,7 @@ export const TicketBoard = () => {
     }
 
     return filtered;
-  }, [allTickets, selectedSector, searchTerm, priorityFilter, assigneeFilter, sortOrder]);
+  }, [allTickets, selectedSector, searchTerm, priorityFilter, assigneeFilter, clientContactFilter, sortOrder, showMyTickets, currentUserId]);
 
   // Debounced refetch for performance
   const debouncedRefetch = useDebounce(refetch, 500);
@@ -179,15 +224,54 @@ export const TicketBoard = () => {
     };
   }, [debouncedRefetch]);
 
-  // Memoizar groupBy para evitar recálculos
-  const ticketsByStatus = useMemo(() => {
-    return tickets?.reduce((acc, ticket) => {
+  // Agrupamento de tickets
+  const { ticketsByStatus, groupedTickets } = useMemo(() => {
+    const byStatus = tickets?.reduce((acc, ticket) => {
       const status = ticket.status || 'pendente';
       if (!acc[status]) acc[status] = [];
       acc[status].push(ticket);
       return acc;
     }, {} as Record<string, any[]>) || {};
-  }, [tickets]);
+
+    // Se não há agrupamento, retorna apenas por status
+    if (groupBy === 'none') {
+      return { ticketsByStatus: byStatus, groupedTickets: {} };
+    }
+
+    // Agrupa tickets dentro de cada status
+    const grouped: Record<string, Record<string, any[]>> = {};
+    
+    Object.entries(byStatus).forEach(([status, statusTickets]) => {
+      grouped[status] = {};
+      
+      statusTickets.forEach(ticket => {
+        let groupKey = '';
+        let groupValue = '';
+        
+        switch (groupBy) {
+          case 'priority':
+            groupKey = ticket.priority || 'sem_prioridade';
+            groupValue = ticket.priority || 'Sem prioridade';
+            break;
+          case 'assignee':
+            groupKey = ticket.assigned_to || 'unassigned';
+            groupValue = ticket.employees?.name || 'Não atribuído';
+            break;
+          case 'client':
+            groupKey = ticket.client_contact_id || 'no_client';
+            groupValue = ticket.funcionarios_clientes?.name || 'Sem cliente';
+            break;
+        }
+        
+        if (!grouped[status][groupKey]) {
+          grouped[status][groupKey] = [];
+        }
+        grouped[status][groupKey].push({ ...ticket, groupValue });
+      });
+    });
+
+    return { ticketsByStatus: byStatus, groupedTickets: grouped };
+  }, [tickets, groupBy]);
 
   // Função para carregar mais tickets em uma coluna
   const loadMoreTickets = (status: string) => {
@@ -210,7 +294,29 @@ export const TicketBoard = () => {
   // Reset contadores quando filtros mudam
   useEffect(() => {
     resetVisibleCounts();
-  }, [searchTerm, priorityFilter, assigneeFilter, selectedSector]);
+  }, [searchTerm, priorityFilter, assigneeFilter, clientContactFilter, selectedSector, showMyTickets, groupBy]);
+
+  // Função para limpar todos os filtros
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setPriorityFilter('all');
+    setAssigneeFilter('all');
+    setClientContactFilter('all');
+    setSortOrder('newest');
+    setGroupBy('none');
+    setHideEmptyColumns(false);
+    setShowMyTickets(false);
+    setCollapsedGroups({});
+    resetVisibleCounts();
+  };
+
+  // Toggle group collapse
+  const toggleGroupCollapse = (groupKey: string) => {
+    setCollapsedGroups(prev => ({
+      ...prev,
+      [groupKey]: !prev[groupKey]
+    }));
+  };
 
   const handleDragStart = (event: DragStartEvent) => {
     const ticket = tickets?.find(t => t.id === event.active.id);
@@ -322,63 +428,29 @@ const handleDragEnd = async (event: DragEndEvent) => {
                 </Button>
               </div>
               
-              {/* Filtros e controles */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Buscar tickets..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-white/50 backdrop-blur-sm border border-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  />
-                </div>
-                
-                <select
-                  value={priorityFilter}
-                  onChange={(e) => setPriorityFilter(e.target.value)}
-                  className="px-3 py-2 text-sm bg-white/50 backdrop-blur-sm border border-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                >
-                  <option value="all">Todas prioridades</option>
-                  <option value="alta">Alta</option>
-                  <option value="media">Média</option>
-                  <option value="baixa">Baixa</option>
-                </select>
-                
-                <select
-                  value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value as any)}
-                  className="px-3 py-2 text-sm bg-white/50 backdrop-blur-sm border border-white/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                >
-                  <option value="newest">Mais recente</option>
-                  <option value="oldest">Mais antigo</option>
-                  <option value="priority">Prioridade</option>
-                </select>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCompactMode(!compactMode)}
-                  className="bg-white/50 backdrop-blur-sm border-white/30"
-                >
-                  {compactMode ? 'Expandir' : 'Compacto'}
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setSearchTerm('');
-                    setPriorityFilter('all');
-                    setAssigneeFilter('all');
-                    setSortOrder('newest');
-                    resetVisibleCounts();
-                  }}
-                  className="bg-white/50 backdrop-blur-sm border-white/30"
-                >
-                  Limpar
-                </Button>
-              </div>
+              {/* Quick Filters */}
+              <TicketQuickFilters
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                priorityFilter={priorityFilter}
+                setPriorityFilter={setPriorityFilter}
+                assigneeFilter={assigneeFilter}
+                setAssigneeFilter={setAssigneeFilter}
+                clientContactFilter={clientContactFilter}
+                setClientContactFilter={setClientContactFilter}
+                sortOrder={sortOrder}
+                setSortOrder={setSortOrder}
+                groupBy={groupBy}
+                setGroupBy={setGroupBy}
+                compactMode={compactMode}
+                setCompactMode={setCompactMode}
+                hideEmptyColumns={hideEmptyColumns}
+                setHideEmptyColumns={setHideEmptyColumns}
+                showMyTickets={showMyTickets}
+                setShowMyTickets={setShowMyTickets}
+                onClearAll={clearAllFilters}
+                currentUserId={currentUserId || undefined}
+              />
 
               <Tabs value={selectedSector} onValueChange={setSelectedSector} className="w-full">
                 <TabsList className="tab-scroll flex w-full items-center gap-1 bg-white/50 backdrop-blur-sm border border-white/20 overflow-x-auto whitespace-nowrap p-1">
@@ -421,21 +493,32 @@ const handleDragEnd = async (event: DragEndEvent) => {
                   </div>
 
                   <TabsContent value={selectedSector} className="mt-0">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 h-[calc(100vh-400px)]">
-                      {Object.entries(statusConfig).map(([status, config]) => (
-                        <MemoizedTicketColumn
-                          key={status}
-                          status={status}
-                          title={config.label}
-                          tickets={ticketsByStatus[status] || []}
-                          visibleCount={visibleCount[status]}
-                          onLoadMore={() => loadMoreTickets(status)}
-                          color={config.color}
-                          bgColor={config.bgColor}
-                          compactMode={compactMode}
-                          onRefetch={refetch}
-                        />
-                      ))}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 h-[calc(100vh-450px)]">
+                      {Object.entries(statusConfig)
+                        .filter(([status]) => !hideEmptyColumns || (ticketsByStatus[status]?.length > 0))
+                        .map(([status, config]) => {
+                          const statusTickets = ticketsByStatus[status] || [];
+                          const hasGroups = groupBy !== 'none' && Object.keys(groupedTickets[status] || {}).length > 0;
+
+                          return (
+                            <MemoizedTicketColumn
+                              key={status}
+                              status={status}
+                              title={config.label}
+                              tickets={statusTickets}
+                              visibleCount={visibleCount[status]}
+                              onLoadMore={() => loadMoreTickets(status)}
+                              color={config.color}
+                              bgColor={config.bgColor}
+                              compactMode={compactMode}
+                              onRefetch={refetch}
+                              groupBy={groupBy}
+                              groupedTickets={groupedTickets[status] || {}}
+                              collapsedGroups={collapsedGroups}
+                              onToggleGroup={toggleGroupCollapse}
+                            />
+                          );
+                        })}
                     </div>
                   </TabsContent>
                 </div>
