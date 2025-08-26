@@ -116,7 +116,17 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
             </div>
             
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span className="truncate">{getCreatorName()}</span>
+              <div className="flex items-center gap-2">
+                <span className="truncate">{getCreatorName()}</span>
+                {ticket.funcionarios_clientes && (
+                  <>
+                    <span>•</span>
+                    <span className="truncate text-orange-600 font-medium">
+                      {ticket.funcionarios_clientes.name}
+                    </span>
+                  </>
+                )}
+              </div>
               <span>{format(new Date(ticket.created_at), 'dd/MM', { locale: ptBR })}</span>
             </div>
           </CardContent>

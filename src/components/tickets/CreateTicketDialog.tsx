@@ -43,8 +43,8 @@ export const CreateTicketDialog = ({ open, onOpenChange, userSectors, onSuccess 
     }
   });
 
-  // Buscar funcionários dos clientes
-  const { data: clientContacts } = useClientContactsForTickets();
+  // Buscar funcionários dos clientes - filtrar por setor se selecionado
+  const { data: clientContacts } = useClientContactsForTickets(formData.sector_id || undefined);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,9 +118,14 @@ export const CreateTicketDialog = ({ open, onOpenChange, userSectors, onSuccess 
             />
           </div>
 
-          <div className="space-y-2">
+           <div className="space-y-2">
             <Label>Setor</Label>
-            <Select value={formData.sector_id} onValueChange={(value) => setFormData(prev => ({ ...prev, sector_id: value }))}>
+            <Select value={formData.sector_id} onValueChange={(value) => setFormData(prev => ({ 
+              ...prev, 
+              sector_id: value,
+              // Limpar funcionário do cliente quando mudar setor
+              client_contact_id: ''
+            }))}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione um setor" />
               </SelectTrigger>
@@ -136,11 +141,21 @@ export const CreateTicketDialog = ({ open, onOpenChange, userSectors, onSuccess 
             </Select>
           </div>
 
-          <div className="space-y-2">
+           <div className="space-y-2">
             <Label>Funcionário do Cliente</Label>
-            <Select value={formData.client_contact_id} onValueChange={(value) => setFormData(prev => ({ ...prev, client_contact_id: value }))}>
+            <Select 
+              value={formData.client_contact_id} 
+              onValueChange={(value) => setFormData(prev => ({ ...prev, client_contact_id: value }))}
+              disabled={!formData.sector_id}
+            >
               <SelectTrigger>
-                <SelectValue placeholder="Selecione um funcionário do cliente (opcional)" />
+                <SelectValue placeholder={
+                  !formData.sector_id 
+                    ? "Selecione um setor primeiro" 
+                    : clientContacts?.length === 0
+                    ? "Nenhum funcionário encontrado para este setor"
+                    : "Selecione um funcionário do cliente (opcional)"
+                } />
               </SelectTrigger>
               <SelectContent>
                 {clientContacts?.map((contact) => (
