@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Search, Users, Mail, Tag } from 'lucide-react';
-import { EmployeeAbsencesManager } from './EmployeeAbsencesManager';
 
 export const UsuariosContent = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -75,8 +74,6 @@ export const UsuariosContent = () => {
       </div>
 
       <div className="p-6 max-w-7xl mx-auto space-y-6">
-        <EmployeeAbsencesManager />
-        
         <Card className="backdrop-blur-sm bg-white/70 border-white/20 shadow-xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
