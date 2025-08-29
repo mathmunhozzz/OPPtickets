@@ -44,7 +44,7 @@ export const CreateTicketDialog = ({ open, onOpenChange, userSectors, onSuccess 
   });
 
   // Buscar funcionários dos clientes filtrados pelo setor selecionado
-  const clientContacts = useClientContactsForTickets(formData.sector_id);
+  const { data: clientContacts, isLoading: clientContactsLoading } = useClientContactsForTickets(formData.sector_id);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,9 +143,10 @@ export const CreateTicketDialog = ({ open, onOpenChange, userSectors, onSuccess 
                 <SelectValue placeholder="Selecione um funcionário do cliente (opcional)" />
               </SelectTrigger>
               <SelectContent>
-                {clientContacts.data?.map((contact: any) => (
+                {clientContacts?.map((contact: any) => (
                   <SelectItem key={contact.id} value={contact.id}>
                     {contact.name}
+                    {contact.clients?.name && ` - ${contact.clients.name}`}
                     {contact.position && ` (${contact.position})`}
                   </SelectItem>
                 ))}

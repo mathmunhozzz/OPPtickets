@@ -231,7 +231,7 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
                   {ticket.description && (
                     <div>
                       <span className="font-medium text-sm">Descrição:</span>
-                      <p className="mt-1 text-sm text-muted-foreground bg-slate-50 p-3 rounded-md">{ticket.description}</p>
+                      <p className="mt-1 text-sm text-muted-foreground bg-slate-50 p-3 rounded-md whitespace-pre-wrap break-words">{ticket.description}</p>
                     </div>
                   )}
 

@@ -140,9 +140,7 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
         style={style}
         className={`group relative cursor-pointer hover:shadow-lg transition-all duration-300 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 hover:scale-[1.02] border-l-4 ${
           priorityColors[ticket.priority || 'media'].replace('from-', 'border-l-').replace(' to-', '').replace('-500', '-400')
-        } ${isDragging ? 'opacity-50 rotate-6 z-50' : ''} ${
-          ticket.isRecentlyUpdated ? 'animate-pulse ring-2 ring-blue-300' : ''
-        }`}
+        } ${isDragging ? 'opacity-50 rotate-6 z-50' : ''}`}
         onClick={() => setDialogOpen(true)}
       >
         {/* Action Buttons */}
@@ -189,7 +187,7 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
           </div>
           
           {ticket.description && (
-            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed break-words">
               {ticket.description}
             </p>
           )}
