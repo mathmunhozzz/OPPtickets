@@ -125,8 +125,7 @@ export const TicketBoard = () => {
       // Combinar os dados
       const processedTickets = ticketsData.map(ticket => ({
         ...ticket,
-        creator_name: creatorNameMap.get(ticket.id) || 'Usuário',
-        isRecentlyUpdated: new Date(ticket.updated_at).getTime() > Date.now() - (5 * 60 * 1000) // 5 minutes
+        creator_name: creatorNameMap.get(ticket.id) || 'Usuário'
       }));
       
       return processedTickets;

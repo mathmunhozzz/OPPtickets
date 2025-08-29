@@ -56,9 +56,7 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
           style={style}
           className={`group relative cursor-pointer hover:shadow-md transition-all duration-200 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 border-l-4 border-l-gradient-to-b ${
             priorityColors[ticket.priority || 'media'].replace('from-', 'border-l-').replace(' to-', '')
-          } ${isDragging ? 'opacity-50 rotate-6 z-50' : ''} ${
-            ticket.isRecentlyUpdated ? 'animate-pulse ring-2 ring-blue-300' : ''
-          }`}
+          } ${isDragging ? 'opacity-50 rotate-6 z-50' : ''}`}
           onClick={() => setDialogOpen(true)}
         >
           {/* Action Buttons - Compact */}
@@ -106,7 +104,14 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
                 )}
                 <span className="truncate">{getCreatorName()}</span>
               </div>
-              <span>{format(new Date(ticket.created_at), 'dd/MM', { locale: ptBR })}</span>
+              <div className="flex flex-col items-end gap-0.5">
+                {ticket.funcionarios_clientes && (
+                  <span className="text-xs text-orange-600 font-medium truncate max-w-[80px]">
+                    {ticket.funcionarios_clientes.name}
+                  </span>
+                )}
+                <span>{format(new Date(ticket.created_at), 'dd/MM', { locale: ptBR })}</span>
+              </div>
             </div>
           </CardContent>
         </Card>
