@@ -24,10 +24,20 @@ const getAssigneeInitials = (name: string) => {
   return (words[0][0] + words[words.length - 1][0]).toUpperCase();
 };
 
-const priorityColors = {
-  baixa: 'from-green-500 to-green-600',
-  media: 'from-yellow-500 to-yellow-600',
-  alta: 'from-red-500 to-red-600'
+// Static priority styles to avoid CSS class generation issues
+const priorityStyles = {
+  baixa: {
+    border: 'border-l-green-400',
+    badge: 'bg-gradient-to-r from-green-500 to-green-600'
+  },
+  media: {
+    border: 'border-l-yellow-400', 
+    badge: 'bg-gradient-to-r from-yellow-500 to-yellow-600'
+  },
+  alta: {
+    border: 'border-l-red-400',
+    badge: 'bg-gradient-to-r from-red-500 to-red-600'
+  }
 };
 
 const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTicketCardProps) => {
@@ -40,6 +50,11 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
 
   const style = {
     transform: CSS.Translate.toString(transform),
+  };
+
+  // Get priority styles
+  const getPriorityStyle = (priority: string) => {
+    return priorityStyles[priority as keyof typeof priorityStyles] || priorityStyles.media;
   };
 
   // Determinar o nome do criador
@@ -55,12 +70,12 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
           ref={setNodeRef}
           style={style}
         className={`group relative cursor-pointer hover:shadow-md transition-all duration-200 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 border-l-4 ${
-          priorityColors[ticket.priority || 'media'].replace('from-', 'border-l-').replace(' to-', '').replace('-500', '-400')
+          getPriorityStyle(ticket.priority || 'media').border
         } ${isDragging ? 'opacity-50 rotate-6 z-50' : ''}`}
           onClick={() => setDialogOpen(true)}
         >
           {/* Action Buttons - Compact */}
-          <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute top-1 right-1 flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity z-10">
             <Button
               variant="ghost"
               size="sm"
@@ -89,7 +104,7 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
                 {ticket.title}
               </h4>
               <Badge 
-                className={`text-xs font-medium text-white bg-gradient-to-r ${priorityColors[ticket.priority || 'media']} px-1 py-0.5`}
+                className={`text-xs font-medium text-white ${getPriorityStyle(ticket.priority || 'media').badge} px-1 py-0.5`}
               >
                 {ticket.priority === 'baixa' ? 'B' : ticket.priority === 'media' ? 'M' : 'A'}
               </Badge>
@@ -139,12 +154,12 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
         ref={setNodeRef}
         style={style}
         className={`group relative cursor-pointer hover:shadow-lg transition-all duration-300 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 hover:scale-[1.02] border-l-4 ${
-          priorityColors[ticket.priority || 'media'].replace('from-', 'border-l-').replace(' to-', '').replace('-500', '-400')
+          getPriorityStyle(ticket.priority || 'media').border
         } ${isDragging ? 'opacity-50 rotate-6 z-50' : ''}`}
         onClick={() => setDialogOpen(true)}
       >
         {/* Action Buttons */}
-        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute top-2 right-2 flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity z-10">
           <Button
             variant="ghost"
             size="sm"
@@ -180,7 +195,7 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
               </h4>
             </div>
             <Badge 
-              className={`text-xs font-medium text-white bg-gradient-to-r ${priorityColors[ticket.priority || 'media']} shadow-sm ml-2`}
+              className={`text-xs font-medium text-white ${getPriorityStyle(ticket.priority || 'media').badge} shadow-sm ml-2`}
             >
               {ticket.priority === 'baixa' ? 'Baixa' : ticket.priority === 'media' ? 'Média' : 'Alta'}
             </Badge>
