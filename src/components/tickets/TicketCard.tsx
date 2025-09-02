@@ -16,10 +16,11 @@ interface TicketCardProps {
   onRefetch: () => void;
 }
 
-const priorityColors = {
-  baixa: 'from-green-500 to-green-600',
-  media: 'from-yellow-500 to-yellow-600',
-  alta: 'from-red-500 to-red-600'
+// Static priority styles to avoid CSS class generation issues
+const priorityStyles = {
+  baixa: { badge: 'bg-gradient-to-r from-green-500 to-green-600' },
+  media: { badge: 'bg-gradient-to-r from-yellow-500 to-yellow-600' },
+  alta: { badge: 'bg-gradient-to-r from-red-500 to-red-600' }
 };
 
 export const TicketCard = ({ ticket, onRefetch }: TicketCardProps) => {
@@ -32,6 +33,11 @@ export const TicketCard = ({ ticket, onRefetch }: TicketCardProps) => {
 
   const style = {
     transform: CSS.Translate.toString(transform),
+  };
+
+  // Get priority styles
+  const getPriorityStyle = (priority: string) => {
+    return priorityStyles[priority as keyof typeof priorityStyles] || priorityStyles.media;
   };
 
   // Determinar o nome do criador
@@ -51,7 +57,7 @@ export const TicketCard = ({ ticket, onRefetch }: TicketCardProps) => {
         }`}
       >
         {/* Action Buttons */}
-        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute top-2 right-2 flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity z-10">
           <Button
             variant="ghost"
             size="sm"
@@ -78,7 +84,7 @@ export const TicketCard = ({ ticket, onRefetch }: TicketCardProps) => {
               {ticket.title}
             </h4>
             <Badge 
-              className={`text-xs font-medium text-white bg-gradient-to-r ${priorityColors[ticket.priority || 'media']} shadow-sm`}
+              className={`text-xs font-medium text-white ${getPriorityStyle(ticket.priority || 'media').badge} shadow-sm`}
             >
               {ticket.priority === 'baixa' ? 'Baixa' : ticket.priority === 'media' ? 'Média' : 'Alta'}
             </Badge>
