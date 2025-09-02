@@ -54,9 +54,9 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
         <Card 
           ref={setNodeRef}
           style={style}
-          className={`group relative cursor-pointer hover:shadow-md transition-all duration-200 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 border-l-4 border-l-gradient-to-b ${
-            priorityColors[ticket.priority || 'media'].replace('from-', 'border-l-').replace(' to-', '')
-          } ${isDragging ? 'opacity-50 rotate-6 z-50' : ''}`}
+        className={`group relative cursor-pointer hover:shadow-md transition-all duration-200 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 border-l-4 ${
+          priorityColors[ticket.priority || 'media'].replace('from-', 'border-l-').replace(' to-', '').replace('-500', '-400')
+        } ${isDragging ? 'opacity-50 rotate-6 z-50' : ''}`}
           onClick={() => setDialogOpen(true)}
         >
           {/* Action Buttons - Compact */}
