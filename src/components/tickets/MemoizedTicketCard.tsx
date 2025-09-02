@@ -69,17 +69,19 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
         <Card 
           ref={setNodeRef}
           style={style}
-        className={`group relative cursor-pointer hover:shadow-md transition-all duration-200 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 border-l-4 ${
+          {...attributes}
+          {...listeners}
+        className={`group relative cursor-grab active:cursor-grabbing hover:shadow-md transition-all duration-200 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 border-l-4 ${
           getPriorityStyle(ticket.priority || 'media').border
         } ${isDragging ? 'opacity-50 rotate-6 z-50' : ''}`}
           onClick={() => setDialogOpen(true)}
         >
           {/* Action Buttons - Compact */}
-          <div className="absolute top-1 right-1 flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity z-10">
+          <div className="absolute top-1 right-1 flex gap-1 opacity-100 transition-opacity z-20">
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+              className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
                 setDeleteDialogOpen(true);
@@ -87,15 +89,6 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
             >
               <Trash2 className="h-2.5 w-2.5" />
             </Button>
-            
-            <div
-              {...attributes}
-              {...listeners}
-              className="p-0.5 rounded cursor-grab active:cursor-grabbing bg-slate-100 hover:bg-slate-200"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <GripVertical className="h-3 w-3 text-slate-500" />
-            </div>
           </div>
           
           <CardContent className="p-2 pr-12">
@@ -153,17 +146,19 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
       <Card 
         ref={setNodeRef}
         style={style}
-        className={`group relative cursor-pointer hover:shadow-lg transition-all duration-300 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 hover:scale-[1.02] border-l-4 ${
+        {...attributes}
+        {...listeners}
+        className={`group relative cursor-grab active:cursor-grabbing hover:shadow-lg transition-all duration-300 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 hover:scale-[1.02] border-l-4 ${
           getPriorityStyle(ticket.priority || 'media').border
         } ${isDragging ? 'opacity-50 rotate-6 z-50' : ''}`}
         onClick={() => setDialogOpen(true)}
       >
         {/* Action Buttons */}
-        <div className="absolute top-2 right-2 flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity z-10">
+        <div className="absolute top-2 right-2 flex gap-1 opacity-100 transition-opacity z-20">
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0 hover:bg-destructive/10 hover:text-destructive"
+            className="h-7 w-7 p-0 hover:bg-destructive/10 hover:text-destructive cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
               setDeleteDialogOpen(true);
@@ -171,15 +166,6 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
           >
             <Trash2 className="h-3 w-3" />
           </Button>
-          
-          <div
-            {...attributes}
-            {...listeners}
-            className="p-1 rounded cursor-grab active:cursor-grabbing bg-slate-100 hover:bg-slate-200"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <GripVertical className="h-4 w-4 text-slate-500" />
-          </div>
         </div>
         
         <CardContent className="p-4 space-y-3 pr-16">
