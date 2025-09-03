@@ -538,7 +538,11 @@ const handleDragEnd = async (event: DragEndEvent) => {
         <DragOverlay>
           {activeTicket ? (
             <div className="rotate-6 opacity-80">
-              <MemoizedTicketCard ticket={activeTicket} onRefetch={refetch} />
+              <MemoizedTicketCard 
+                ticket={activeTicket} 
+                compact={true}
+                onRefetch={refetch} 
+              />
             </div>
           ) : null}
         </DragOverlay>

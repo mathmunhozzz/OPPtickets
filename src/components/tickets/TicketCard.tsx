@@ -52,7 +52,7 @@ export const TicketCard = ({ ticket, onRefetch }: TicketCardProps) => {
         style={style}
         {...attributes}
         {...listeners}
-        className={`group relative cursor-grab active:cursor-grabbing hover:shadow-lg transition-all duration-300 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 hover:scale-[1.02] ${
+        className={`group relative cursor-grab active:cursor-grabbing hover:shadow-lg transition-all duration-300 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 hover:scale-[1.02] select-none ${
           isDragging ? 'opacity-50 rotate-6 z-50' : ''
         }`}
       >
@@ -91,7 +91,7 @@ export const TicketCard = ({ ticket, onRefetch }: TicketCardProps) => {
           </div>
           
           {ticket.description && (
-            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed break-words">
               {ticket.description}
             </p>
           )}

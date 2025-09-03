@@ -71,7 +71,7 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
           style={style}
           {...attributes}
           {...listeners}
-        className={`group relative cursor-grab active:cursor-grabbing hover:shadow-md transition-all duration-200 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 border-l-4 ${
+        className={`group relative cursor-grab active:cursor-grabbing hover:shadow-md transition-all duration-200 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 border-l-4 select-none ${
           getPriorityStyle(ticket.priority || 'media').border
         } ${isDragging ? 'opacity-50 rotate-6 z-50' : ''}`}
           onClick={() => setDialogOpen(true)}
@@ -148,7 +148,7 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
         style={style}
         {...attributes}
         {...listeners}
-        className={`group relative cursor-grab active:cursor-grabbing hover:shadow-lg transition-all duration-300 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 hover:scale-[1.02] border-l-4 ${
+         className={`group relative cursor-grab active:cursor-grabbing hover:shadow-lg transition-all duration-300 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 hover:scale-[1.02] border-l-4 select-none ${
           getPriorityStyle(ticket.priority || 'media').border
         } ${isDragging ? 'opacity-50 rotate-6 z-50' : ''}`}
         onClick={() => setDialogOpen(true)}
