@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { MemoizedTicketCard } from './MemoizedTicketCard';
+import { TicketSkeleton } from './TicketSkeleton';
 import { GroupHeader } from './GroupHeader';
 import { useDroppable } from '@dnd-kit/core';
 import { useEffect, useRef, useState } from 'react';
@@ -72,11 +73,11 @@ export const TicketColumn = ({
         isOver ? 'bg-blue-50/80 border-blue-200' : ''
       }`}
     >
-      <CardHeader className="pb-3 flex-shrink-0">
+      <CardHeader className="pb-3 flex-shrink-0 sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-border/50">
         <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-          <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${color} shadow-sm`} />
-          <span className="text-slate-700">{title}</span>
-          <span className="ml-auto text-xs text-muted-foreground bg-white/50 px-2 py-1 rounded-full">
+          <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${color} shadow-sm animate-pulse`} />
+          <span className="text-foreground">{title}</span>
+          <span className="ml-auto text-xs text-muted-foreground bg-white/70 px-2 py-1 rounded-full font-medium shadow-sm">
             {tickets.length}
           </span>
         </CardTitle>
@@ -163,12 +164,20 @@ export const TicketColumn = ({
               </div>
             )}
             
+            {/* Loading skeletons when no tickets but data might be loading */}
             {tickets.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                <div className={`w-12 h-12 mx-auto mb-2 rounded-full bg-gradient-to-r ${bgColor} flex items-center justify-center opacity-50`}>
-                  <div className={`w-4 h-4 rounded-full bg-gradient-to-r ${color}`} />
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="animate-fade-in" style={{ animationDelay: `${i * 100}ms` }}>
+                    <TicketSkeleton compact={compactMode} />
+                  </div>
+                ))}
+                <div className="text-center py-4 text-muted-foreground animate-fade-in" style={{ animationDelay: '400ms' }}>
+                  <div className={`w-12 h-12 mx-auto mb-2 rounded-full bg-gradient-to-r ${bgColor} flex items-center justify-center opacity-50`}>
+                    <div className={`w-4 h-4 rounded-full bg-gradient-to-r ${color} animate-pulse`} />
+                  </div>
+                  <p className="text-sm">Nenhum ticket</p>
                 </div>
-                <p className="text-sm">Nenhum ticket</p>
               </div>
             )}
           </div>

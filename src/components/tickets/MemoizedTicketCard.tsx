@@ -3,11 +3,12 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, User, Tag, GripVertical, Trash2 } from 'lucide-react';
+import { Calendar, User, Tag, GripVertical, Trash2, MoreHorizontal } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { TicketDialog } from './TicketDialog';
 import { DeleteTicketDialog } from './DeleteTicketDialog';
+import { AvatarWithInitials } from '@/components/ui/avatar-with-initials';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { truncateWords } from '@/lib/utils';
@@ -53,6 +54,8 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
     transform: CSS.Translate.toString(transform),
   };
 
+  const hasMoreContent = ticket.description && ticket.description.length > 50;
+
   // Get priority styles
   const getPriorityStyle = (priority: string) => {
     return priorityStyles[priority as keyof typeof priorityStyles] || priorityStyles.media;
@@ -70,19 +73,26 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
         <Card 
           ref={setNodeRef}
           style={style}
-          {...attributes}
-          {...listeners}
-        className={`group relative cursor-grab active:cursor-grabbing hover:shadow-md transition-all duration-200 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 border-l-4 select-none ${
-          getPriorityStyle(ticket.priority || 'media').border
-        } ${isDragging ? 'opacity-50 rotate-6 z-50' : ''}`}
+          className={`group relative overflow-hidden border-l-4 ${getPriorityStyle(ticket.priority || 'media').border} backdrop-blur-sm bg-white/90 border-white/30 hover:bg-white/95 shadow-sm hover:shadow-md transition-all duration-200 select-none animate-fade-in ${
+            isDragging ? 'opacity-50 rotate-1 shadow-lg z-50 scale-105' : 'hover:scale-[1.01]'
+          }`}
           onClick={() => setDialogOpen(true)}
         >
-          {/* Action Buttons - Compact */}
-          <div className="absolute top-1 right-1 flex gap-1 opacity-100 transition-opacity z-20">
+          {/* Drag Handle - Compact */}
+          <div 
+            {...attributes}
+            {...listeners}
+            className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing z-20 p-1 rounded bg-white/60 hover:bg-white"
+          >
+            <GripVertical className="h-3 w-3 text-muted-foreground" />
+          </div>
+
+          {/* Quick Actions - Compact */}
+          <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive cursor-pointer"
+              className="h-6 w-6 p-0 bg-white/60 hover:bg-destructive/10 hover:text-destructive"
               onClick={(e) => {
                 e.stopPropagation();
                 setDeleteDialogOpen(true);
@@ -92,34 +102,48 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
             </Button>
           </div>
           
-          <CardContent className="p-2 pr-12">
+          <CardContent className="p-2 pl-8 pr-12 cursor-pointer">
             <div className="flex items-center justify-between mb-1">
-              <h4 className="font-medium text-xs line-clamp-1 text-slate-800">
-                {ticket.title}
-              </h4>
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                {ticket.employees?.name && (
+                  <AvatarWithInitials 
+                    name={ticket.employees.name}
+                    variant="assignee"
+                    size="sm"
+                    showTooltip={false}
+                  />
+                )}
+                <h4 className="font-medium text-xs line-clamp-1 text-foreground truncate">
+                  {ticket.title}
+                </h4>
+              </div>
               <Badge 
-                className={`text-xs font-medium text-white ${getPriorityStyle(ticket.priority || 'media').badge} px-1 py-0.5`}
+                className={`text-xs font-medium text-white ${getPriorityStyle(ticket.priority || 'media').badge} px-1 py-0.5 flex-shrink-0`}
               >
                 {ticket.priority === 'baixa' ? 'B' : ticket.priority === 'media' ? 'M' : 'A'}
               </Badge>
             </div>
             
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <div className="flex items-center gap-1">
-                {ticket.employees?.name && (
-                  <div className="w-4 h-4 rounded-full bg-blue-500 text-white text-xs flex items-center justify-center font-bold">
-                    {getAssigneeInitials(ticket.employees.name)}
-                  </div>
-                )}
+              <div className="flex items-center gap-1 min-w-0">
+                <AvatarWithInitials 
+                  name={getCreatorName()}
+                  variant="creator"
+                  size="sm"
+                  showTooltip={false}
+                />
                 <span className="truncate">{getCreatorName()}</span>
               </div>
-              <div className="flex flex-col items-end gap-0.5">
+              <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
                 {ticket.funcionarios_clientes && (
-                  <span className="text-xs text-orange-600 font-medium truncate max-w-[80px]">
-                    {ticket.funcionarios_clientes.name}
-                  </span>
+                  <AvatarWithInitials 
+                    name={ticket.funcionarios_clientes.name}
+                    variant="client"
+                    size="sm"
+                    showTooltip={false}
+                  />
                 )}
-                <span>{format(new Date(ticket.created_at), 'dd/MM', { locale: ptBR })}</span>
+                <span className="text-xs">{format(new Date(ticket.created_at), 'dd/MM', { locale: ptBR })}</span>
               </div>
             </div>
           </CardContent>
@@ -147,19 +171,26 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
       <Card 
         ref={setNodeRef}
         style={style}
-        {...attributes}
-        {...listeners}
-         className={`group relative cursor-grab active:cursor-grabbing hover:shadow-lg transition-all duration-300 backdrop-blur-sm bg-white/80 border-white/30 hover:bg-white/90 hover:scale-[1.02] border-l-4 select-none ${
-          getPriorityStyle(ticket.priority || 'media').border
-        } ${isDragging ? 'opacity-50 rotate-6 z-50' : ''}`}
+        className={`group relative overflow-hidden border-l-4 ${getPriorityStyle(ticket.priority || 'media').border} backdrop-blur-sm bg-white/90 border-white/30 hover:bg-white/95 shadow-md hover:shadow-xl transition-all duration-300 select-none animate-fade-in ${
+          isDragging ? 'opacity-50 rotate-2 shadow-2xl z-50 scale-105' : 'hover:scale-[1.02]'
+        }`}
         onClick={() => setDialogOpen(true)}
       >
-        {/* Action Buttons */}
-        <div className="absolute top-2 right-2 flex gap-1 opacity-100 transition-opacity z-20">
+        {/* Drag Handle */}
+        <div 
+          {...attributes}
+          {...listeners}
+          className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing z-20 p-1 rounded bg-white/80 hover:bg-white shadow-sm"
+        >
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </div>
+
+        {/* Quick Actions */}
+        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 z-20">
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0 hover:bg-destructive/10 hover:text-destructive cursor-pointer"
+            className="h-7 w-7 p-0 bg-white/80 hover:bg-destructive/10 hover:text-destructive shadow-sm"
             onClick={(e) => {
               e.stopPropagation();
               setDeleteDialogOpen(true);
@@ -167,31 +198,52 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
           >
             <Trash2 className="h-3 w-3" />
           </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0 bg-white/80 hover:bg-muted shadow-sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              setDialogOpen(true);
+            }}
+          >
+            <MoreHorizontal className="h-3 w-3" />
+          </Button>
         </div>
         
-        <CardContent className="p-4 space-y-3 pr-16">
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-2 flex-1">
+        <CardContent className="p-4 space-y-3 pl-12 pr-16 cursor-pointer">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-2 flex-1 min-w-0">
               {ticket.employees?.name && (
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white text-xs flex items-center justify-center font-bold shadow-sm">
-                  {getAssigneeInitials(ticket.employees.name)}
-                </div>
+                <AvatarWithInitials 
+                  name={ticket.employees.name}
+                  variant="assignee"
+                  size="md"
+                />
               )}
-              <h4 className="font-semibold text-sm line-clamp-2 text-slate-800 leading-relaxed flex-1">
+              <h4 className="font-semibold text-sm line-clamp-2 text-foreground leading-relaxed flex-1">
                 {ticket.title}
               </h4>
             </div>
             <Badge 
-              className={`text-xs font-medium text-white ${getPriorityStyle(ticket.priority || 'media').badge} shadow-sm ml-2`}
+              className={`text-xs font-medium text-white ${getPriorityStyle(ticket.priority || 'media').badge} shadow-sm flex-shrink-0`}
             >
               {ticket.priority === 'baixa' ? 'Baixa' : ticket.priority === 'media' ? 'Média' : 'Alta'}
             </Badge>
           </div>
           
           {ticket.description && (
-            <p className="text-xs text-muted-foreground leading-relaxed break-words">
-              {truncateWords(ticket.description, 5)}
-            </p>
+            <div className="relative">
+              <p className="text-xs text-muted-foreground leading-relaxed break-words">
+                {truncateWords(ticket.description, 5)}
+              </p>
+              {hasMoreContent && (
+                <div className="absolute right-0 bottom-0 w-8 h-4 bg-gradient-to-l from-white/95 to-transparent flex items-center justify-end">
+                  <span className="text-xs text-muted-foreground">...</span>
+                </div>
+              )}
+            </div>
           )}
 
           <div className="space-y-2">
@@ -205,19 +257,23 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
             )}
             
             {ticket.employees?.name && (
-              <div className="flex items-center gap-2 text-xs text-slate-600">
-                <div className="p-1 rounded bg-purple-100">
-                  <User className="h-3 w-3 text-purple-600" />
-                </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <AvatarWithInitials 
+                  name={ticket.employees.name}
+                  variant="assignee"
+                  size="sm"
+                />
                 <span className="font-medium">Responsável: {ticket.employees.name}</span>
               </div>
             )}
 
             {ticket.funcionarios_clientes && (
-              <div className="flex items-center gap-2 text-xs text-slate-600">
-                <div className="p-1 rounded bg-orange-100">
-                  <User className="h-3 w-3 text-orange-600" />
-                </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <AvatarWithInitials 
+                  name={ticket.funcionarios_clientes.name}
+                  variant="client"
+                  size="sm"
+                />
                 <span className="font-medium">
                   Cliente: {ticket.funcionarios_clientes.name}
                   {ticket.funcionarios_clientes.clients?.name && ` (${ticket.funcionarios_clientes.clients.name})`}
@@ -225,10 +281,12 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
               </div>
             )}
 
-            <div className="flex items-center gap-2 text-xs text-slate-600">
-              <div className="p-1 rounded bg-green-100">
-                <User className="h-3 w-3 text-green-600" />
-              </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <AvatarWithInitials 
+                name={getCreatorName()}
+                variant="creator"
+                size="sm"
+              />
               <span className="font-medium">Criado por: {getCreatorName()}</span>
             </div>
 
