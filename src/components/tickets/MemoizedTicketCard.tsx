@@ -10,6 +10,7 @@ import { TicketDialog } from './TicketDialog';
 import { DeleteTicketDialog } from './DeleteTicketDialog';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
+import { truncateWords } from '@/lib/utils';
 
 interface MemoizedTicketCardProps {
   ticket: any;
@@ -188,8 +189,8 @@ const TicketCardComponent = ({ ticket, compact = false, onRefetch }: MemoizedTic
           </div>
           
           {ticket.description && (
-            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed break-words">
-              {ticket.description}
+            <p className="text-xs text-muted-foreground leading-relaxed break-words">
+              {truncateWords(ticket.description, 5)}
             </p>
           )}
 
