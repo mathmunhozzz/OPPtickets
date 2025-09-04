@@ -5,12 +5,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, User, Tag, Clock, History } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Calendar, User, Tag, Clock, History, Trash2, Save, Edit3 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
+import { DeleteTicketDialog } from './DeleteTicketDialog';
 
 interface TicketDialogProps {
   ticket: any;
@@ -28,6 +31,9 @@ const statusOptions = [
 
 export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDialogProps) => {
   const [updating, setUpdating] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editingDescription, setEditingDescription] = useState(false);
+  const [description, setDescription] = useState(ticket.description || '');
 
   // Buscar funcionários para atribuição
   const { data: employees } = useQuery({
@@ -128,6 +134,32 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
     }
   };
 
+  const handleDescriptionSave = async () => {
+    setUpdating(true);
+    try {
+      const { error } = await supabase
+        .from('tickets')
+        .update({ description })
+        .eq('id', ticket.id);
+
+      if (error) throw error;
+      
+      toast.success('Descrição atualizada com sucesso!');
+      setEditingDescription(false);
+      onRefetch();
+    } catch (error) {
+      console.error('Erro ao atualizar descrição:', error);
+      toast.error('Erro ao atualizar descrição');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleDescriptionCancel = () => {
+    setDescription(ticket.description || '');
+    setEditingDescription(false);
+  };
+
   const getActionLabel = (actionType: string, oldValue?: string, newValue?: string) => {
     switch (actionType) {
       case 'created':
@@ -162,9 +194,19 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto" aria-describedby="ticket-dialog-description">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Tag className="h-5 w-5" />
-            {ticket.title}
+          <DialogTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Tag className="h-5 w-5" />
+              {ticket.title}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </DialogTitle>
           <DialogDescription id="ticket-dialog-description" className="sr-only">
             Visualizar e gerenciar detalhes do ticket, incluindo status, responsável e histórico de ações
@@ -228,12 +270,56 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
                     </div>
                   </div>
 
-                  {ticket.description && (
-                    <div>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
                       <span className="font-medium text-sm">Descrição:</span>
-                      <p className="mt-1 text-sm text-muted-foreground bg-slate-50 p-3 rounded-md whitespace-pre-wrap break-words">{ticket.description}</p>
+                      {!editingDescription && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2 text-xs"
+                          onClick={() => setEditingDescription(true)}
+                        >
+                          <Edit3 className="h-3 w-3 mr-1" />
+                          Editar
+                        </Button>
+                      )}
                     </div>
-                  )}
+                    
+                    {editingDescription ? (
+                      <div className="space-y-2">
+                        <Textarea
+                          value={description}
+                          onChange={(e) => setDescription(e.target.value)}
+                          placeholder="Digite a descrição do ticket..."
+                          className="min-h-[100px] resize-none"
+                          disabled={updating}
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={handleDescriptionSave}
+                            disabled={updating}
+                          >
+                            <Save className="h-3 w-3 mr-1" />
+                            Salvar
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleDescriptionCancel}
+                            disabled={updating}
+                          >
+                            Cancelar
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="mt-1 text-sm text-muted-foreground bg-slate-50 p-3 rounded-md whitespace-pre-wrap break-words min-h-[60px]">
+                        {ticket.description || 'Nenhuma descrição fornecida'}
+                      </p>
+                    )}
+                  </div>
 
                   {ticket.tags && ticket.tags.length > 0 && (
                     <div>
@@ -347,6 +433,16 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
           </TabsContent>
         </Tabs>
       </DialogContent>
+      
+      <DeleteTicketDialog
+        ticket={ticket}
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onRefetch={() => {
+          onRefetch();
+          onOpenChange(false);
+        }}
+      />
     </Dialog>
   );
 };
