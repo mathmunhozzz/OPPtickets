@@ -1,151 +1,214 @@
-
-import React, { useState } from 'react';
-import { Plus, Search, Edit, Trash2, Building } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { useClientContacts, useDeleteClientContact } from '@/hooks/useClientContacts';
+import { Plus, Edit2, Clock, CheckCircle, Check, X } from 'lucide-react';
+import { useClientContacts } from '@/hooks/useClientContacts';
 import { ClientContactDialog } from './ClientContactDialog';
-import type { ClientContact } from '@/hooks/useClientContacts';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
 
 export const ClientContactsContent = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedContact, setSelectedContact] = useState<ClientContact | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
+  const [editingContact, setEditingContact] = useState<any>(null);
   const { data: contacts, isLoading } = useClientContacts();
-  const deleteContactMutation = useDeleteClientContact();
+  const queryClient = useQueryClient();
 
-  const filteredContacts = contacts?.filter(contact => {
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      contact.name?.toLowerCase().includes(searchLower) ||
-      contact.clients?.name?.toLowerCase().includes(searchLower) ||
-      contact.email?.toLowerCase().includes(searchLower) ||
-      contact.position?.toLowerCase().includes(searchLower) ||
-      contact.sectors?.name?.toLowerCase().includes(searchLower)
-    );
-  }) || [];
+  const approveMutation = useMutation({
+    mutationFn: async ({ id, sectorId }: { id: string; sectorId: string }) => {
+      const { error } = await supabase
+        .from('funcionarios_clientes')
+        .update({
+          approval_status: 'approved',
+          is_active: true,
+          sector_id: sectorId,
+          approved_by: (await supabase.auth.getUser()).data.user?.id,
+          approved_at: new Date().toISOString()
+        })
+        .eq('id', id);
 
-  const handleEditContact = (contact: ClientContact) => {
-    setSelectedContact(contact);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Cadastro aprovado com sucesso!" });
+      queryClient.invalidateQueries({ queryKey: ['client-contacts'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao aprovar cadastro",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('funcionarios_clientes')
+        .update({
+          approval_status: 'rejected',
+          approved_by: (await supabase.auth.getUser()).data.user?.id,
+          approved_at: new Date().toISOString()
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Cadastro rejeitado." });
+      queryClient.invalidateQueries({ queryKey: ['client-contacts'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao rejeitar cadastro",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleAddContact = () => {
+    setEditingContact(null);
     setIsDialogOpen(true);
   };
 
-  const handleDeleteContact = async (contactId: string) => {
-    if (confirm('Tem certeza que deseja remover este funcionário?')) {
-      deleteContactMutation.mutate(contactId);
-    }
-  };
-
-  const handleCreateNew = () => {
-    setSelectedContact(null);
+  const handleEditContact = (contact: any) => {
+    setEditingContact(contact);
     setIsDialogOpen(true);
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <div>Carregando...</div>;
   }
+
+  const pendingContacts = contacts?.filter(c => c.approval_status === 'pending') || [];
+  const approvedContacts = contacts?.filter(c => c.approval_status === 'approved' || !c.approval_status) || [];
+  const rejectedContacts = contacts?.filter(c => c.approval_status === 'rejected') || [];
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Funcionários dos Clientes</h1>
-          <p className="text-gray-600 mt-1">Gerencie os contatos e funcionários de cada cliente</p>
-        </div>
-        <Button onClick={handleCreateNew} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Novo Funcionário
+        <h1 className="text-2xl font-bold">Funcionários de Clientes</h1>
+        <Button onClick={handleAddContact}>
+          <Plus className="h-4 w-4 mr-2" />
+          Adicionar Funcionário
         </Button>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            placeholder="Pesquisar por nome, cliente, email, cargo ou setor..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredContacts.map((contact) => (
-          <Card key={contact.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex justify-between items-start">
-                <div className="space-y-1">
-                  <CardTitle className="text-lg">{contact.name}</CardTitle>
-                  <CardDescription className="font-medium text-blue-600">
-                    {contact.clients?.name}
-                  </CardDescription>
-                  {contact.sectors && (
-                    <div className="flex items-center gap-1 text-sm text-gray-500">
-                      <Building className="h-3 w-3" />
-                      <span>{contact.sectors.name}</span>
+      {/* Pending Approvals */}
+      {pendingContacts.length > 0 && (
+        <div className="bg-card rounded-lg border">
+          <div className="p-4 border-b">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Clock className="h-5 w-5 text-orange-500" />
+              Aguardando Aprovação ({pendingContacts.length})
+            </h2>
+          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Cliente</TableHead>
+                <TableHead>Cidade</TableHead>
+                <TableHead>Cargo</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {pendingContacts.map((contact) => (
+                <TableRow key={contact.id}>
+                  <TableCell className="font-medium">{contact.name}</TableCell>
+                  <TableCell>{contact.email}</TableCell>
+                  <TableCell>{contact.clients?.name}</TableCell>
+                  <TableCell>{contact.city}</TableCell>
+                  <TableCell>{contact.position}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          // For now, just approve without sector - you can add sector selection later
+                          approveMutation.mutate({ id: contact.id, sectorId: '' });
+                        }}
+                        disabled={approveMutation.isPending}
+                      >
+                        <Check className="h-4 w-4 mr-1" />
+                        Aprovar
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => rejectMutation.mutate(contact.id)}
+                        disabled={rejectMutation.isPending}
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Rejeitar
+                      </Button>
                     </div>
-                  )}
-                </div>
-                <div className="flex gap-1">
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {/* Approved Contacts */}
+      <div className="bg-card rounded-lg border">
+        <div className="p-4 border-b">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <CheckCircle className="h-5 w-5 text-green-500" />
+            Funcionários Aprovados ({approvedContacts.length})
+          </h2>
+        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nome</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Setor</TableHead>
+              <TableHead>Cargo</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {approvedContacts.map((contact) => (
+              <TableRow key={contact.id}>
+                <TableCell className="font-medium">{contact.name}</TableCell>
+                <TableCell>{contact.email}</TableCell>
+                <TableCell>{contact.clients?.name}</TableCell>
+                <TableCell>{contact.sectors?.name || 'Não definido'}</TableCell>
+                <TableCell>{contact.position}</TableCell>
+                <TableCell>
+                  <Badge variant={contact.is_active ? "default" : "secondary"}>
+                    {contact.is_active ? "Ativo" : "Inativo"}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleEditContact(contact)}
                   >
-                    <Edit className="h-4 w-4" />
+                    <Edit2 className="h-4 w-4" />
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteContact(contact.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex flex-wrap gap-1">
-                {contact.position && (
-                  <Badge variant="secondary">{contact.position}</Badge>
-                )}
-                {contact.sectors && (
-                  <Badge variant="outline">{contact.sectors.name}</Badge>
-                )}
-              </div>
-              {contact.email && (
-                <p className="text-sm text-gray-600">{contact.email}</p>
-              )}
-              {contact.phone && (
-                <p className="text-sm text-gray-600">{contact.phone}</p>
-              )}
-              {contact.notes && (
-                <p className="text-sm text-gray-500 italic">{contact.notes}</p>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
-
-      {filteredContacts.length === 0 && !isLoading && (
-        <div className="text-center py-12">
-          <p className="text-gray-500">Nenhum funcionário encontrado</p>
-        </div>
-      )}
 
       <ClientContactDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        contact={selectedContact}
+        contact={editingContact}
       />
     </div>
   );

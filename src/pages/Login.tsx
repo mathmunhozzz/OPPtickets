@@ -133,8 +133,30 @@ const Login = () => {
               </Button>
             </form>
             
-            <div className="mt-6 text-center">
-              <p className="text-xs text-muted-foreground">© 2025 OPPTickets. Sistema de gerenciamento de tickets.</p>
+            <div className="mt-6 space-y-4">
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground">© 2025 OPPTickets. Sistema de gerenciamento de tickets.</p>
+              </div>
+              
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    ou
+                  </span>
+                </div>
+              </div>
+              
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">
+                  É funcionário de uma prefeitura?{' '}
+                  <a href="/client-register" className="text-primary hover:underline">
+                    Solicite acesso
+                  </a>
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>

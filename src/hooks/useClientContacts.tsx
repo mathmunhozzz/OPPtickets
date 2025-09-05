@@ -12,7 +12,12 @@ export interface ClientContact {
   phone?: string;
   position?: string;
   notes?: string;
+  city?: string;
   is_active: boolean;
+  approval_status?: 'pending' | 'approved' | 'rejected';
+  auth_user_id?: string;
+  approved_by?: string;
+  approved_at?: string;
   created_at: string;
   updated_at: string;
   clients?: {
@@ -46,7 +51,6 @@ export const useClientContacts = (clientId?: string) => {
             name
           )
         `)
-        .eq('is_active', true)
         .order('name');
 
       if (clientId) {

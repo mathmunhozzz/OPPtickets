@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      cities: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           contact: string | null
@@ -178,6 +199,11 @@ export type Database = {
       }
       funcionarios_clientes: {
         Row: {
+          approval_status: string | null
+          approved_at: string | null
+          approved_by: string | null
+          auth_user_id: string | null
+          city: string | null
           client_id: string
           created_at: string
           email: string | null
@@ -191,6 +217,11 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          auth_user_id?: string | null
+          city?: string | null
           client_id: string
           created_at?: string
           email?: string | null
@@ -204,6 +235,11 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          auth_user_id?: string | null
+          city?: string | null
           client_id?: string
           created_at?: string
           email?: string | null

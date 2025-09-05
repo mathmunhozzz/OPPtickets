@@ -11,6 +11,7 @@ import Relatorios from "./pages/Relatorios";
 
 import { AuthGuard } from "./components/auth/AuthGuard";
 import ClientContacts from "./pages/ClientContacts";
+import ClientRegister from "./pages/ClientRegister";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Login />} />
+        <Route path="/client-register" element={<ClientRegister />} />
         <Route path="*" element={<AuthGuard><ProtectedRoutes /></AuthGuard>} />
       </Routes>
     </QueryClientProvider>
