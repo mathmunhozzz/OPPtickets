@@ -799,6 +799,20 @@ export type Database = {
         Args: { check_user_id?: string; ticket_uuid: string }
         Returns: boolean
       }
+      get_client_municipalities: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          municipality: string
+        }[]
+      }
+      get_clients_public: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          municipality: string
+          name: string
+        }[]
+      }
       get_ticket_creator_names: {
         Args: { check_user_id?: string; ticket_ids: string[] }
         Returns: {

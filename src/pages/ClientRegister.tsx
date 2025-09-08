@@ -160,8 +160,8 @@ const ClientRegister = () => {
                       </FormControl>
                       <SelectContent>
                         {cities?.map((city) => (
-                          <SelectItem key={city.id} value={city.name}>
-                            {city.name}
+                          <SelectItem key={city} value={city}>
+                            {city}
                           </SelectItem>
                         ))}
                       </SelectContent>

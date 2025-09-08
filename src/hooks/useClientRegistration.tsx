@@ -17,40 +17,20 @@ export const useClientRegistration = () => {
 
   return useMutation({
     mutationFn: async (data: ClientRegistrationData) => {
-      // First, create the auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            name: data.name,
-            is_client: true
-          }
-        }
+      const { data: result, error } = await supabase.functions.invoke('register-client-contact', {
+        body: data
       });
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Usuário não foi criado');
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(error.message || 'Erro ao processar cadastro');
+      }
 
-      // Then create the client contact record
-      const { error: contactError } = await supabase
-        .from('funcionarios_clientes')
-        .insert({
-          auth_user_id: authData.user.id,
-          name: data.name,
-          email: data.email,
-          city: data.city,
-          position: data.position,
-          client_id: data.client_id,
-          phone: data.phone,
-          approval_status: 'pending',
-          is_active: false
-        });
+      if (result?.error) {
+        throw new Error(result.error);
+      }
 
-      if (contactError) throw contactError;
-
-      return authData;
+      return result;
     },
     onSuccess: () => {
       toast({

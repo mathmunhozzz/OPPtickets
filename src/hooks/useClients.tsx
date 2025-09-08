@@ -16,9 +16,7 @@ export const useClients = () => {
       console.log('Buscando clientes...');
       
       const { data, error } = await supabase
-        .from('clients')
-        .select('*')
-        .order('name');
+        .rpc('get_clients_public');
 
       if (error) {
         console.error('Erro ao buscar clientes:', error);

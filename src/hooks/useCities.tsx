@@ -1,26 +1,19 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export interface City {
-  id: string;
-  name: string;
-}
-
 export const useCities = () => {
   return useQuery({
-    queryKey: ['cities'],
+    queryKey: ['municipalities'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('cities')
-        .select('*')
-        .order('name');
+        .rpc('get_client_municipalities');
 
       if (error) {
-        console.error('Erro ao buscar cidades:', error);
+        console.error('Erro ao buscar municípios:', error);
         throw error;
       }
 
-      return data as City[];
+      return data.map((item: { municipality: string }) => item.municipality).filter(Boolean);
     },
   });
 };
