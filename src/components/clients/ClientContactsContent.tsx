@@ -18,6 +18,16 @@ export const ClientContactsContent = () => {
 
   const approveMutation = useMutation({
     mutationFn: async ({ id, sectorId }: { id: string; sectorId: string }) => {
+      // Get contact details including auth_user_id
+      const { data: contact, error: contactError } = await supabase
+        .from('funcionarios_clientes')
+        .select('auth_user_id')
+        .eq('id', id)
+        .single();
+
+      if (contactError || !contact) throw new Error('Contato não encontrado');
+
+      // Update funcionarios_clientes
       const { error } = await supabase
         .from('funcionarios_clientes')
         .update({
@@ -30,6 +40,18 @@ export const ClientContactsContent = () => {
         .eq('id', id);
 
       if (error) throw error;
+
+      // Update profiles table account_status
+      if (contact.auth_user_id) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ account_status: 'approved' })
+          .eq('user_id', contact.auth_user_id);
+
+        if (profileError) {
+          console.error('Failed to update profile status:', profileError);
+        }
+      }
     },
     onSuccess: () => {
       toast({ title: "Cadastro aprovado com sucesso!" });
@@ -46,6 +68,16 @@ export const ClientContactsContent = () => {
 
   const rejectMutation = useMutation({
     mutationFn: async (id: string) => {
+      // Get contact details including auth_user_id
+      const { data: contact, error: contactError } = await supabase
+        .from('funcionarios_clientes')
+        .select('auth_user_id')
+        .eq('id', id)
+        .single();
+
+      if (contactError || !contact) throw new Error('Contato não encontrado');
+
+      // Update funcionarios_clientes
       const { error } = await supabase
         .from('funcionarios_clientes')
         .update({
@@ -56,6 +88,18 @@ export const ClientContactsContent = () => {
         .eq('id', id);
 
       if (error) throw error;
+
+      // Update profiles table account_status
+      if (contact.auth_user_id) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ account_status: 'rejected' })
+          .eq('user_id', contact.auth_user_id);
+
+        if (profileError) {
+          console.error('Failed to update profile status:', profileError);
+        }
+      }
     },
     onSuccess: () => {
       toast({ title: "Cadastro rejeitado." });

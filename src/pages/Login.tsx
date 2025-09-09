@@ -21,21 +21,35 @@ const Login = () => {
     }
     setLoading(true);
     try {
-      const {
-        error
-      } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
+      
       if (error) {
         if (error.message.includes('Invalid login credentials')) {
           toast.error('Email ou senha incorretos');
         } else {
           toast.error('Erro ao fazer login: ' + error.message);
         }
-      } else {
-        navigate('/dashboard');
-        toast.success('Login realizado com sucesso!');
+      } else if (data.user) {
+        // Check user's approval status
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('account_status')
+          .eq('user_id', data.user.id)
+          .single();
+
+        if (profile?.account_status === 'pending') {
+          navigate('/aguarde-aprovacao');
+          toast.info('Seu cadastro ainda está aguardando aprovação');
+        } else if (profile?.account_status === 'rejected') {
+          await supabase.auth.signOut();
+          toast.error('Seu cadastro foi rejeitado. Entre em contato com o suporte.');
+        } else {
+          navigate('/dashboard');
+          toast.success('Login realizado com sucesso!');
+        }
       }
     } catch (error) {
       toast.error('Erro inesperado ao fazer login');

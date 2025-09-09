@@ -124,6 +124,28 @@ serve(async (req) => {
       );
     }
 
+    // Insert into profiles table with pending status
+    const { error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .insert({
+        user_id: authData.user.id,
+        name,
+        account_status: 'pending'
+      });
+
+    if (profileError) {
+      console.error('Profile insertion failed:', profileError);
+      
+      // Cleanup: delete the auth user and contact if profile creation fails
+      await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+      await supabaseAdmin.from('funcionarios_clientes').delete().eq('auth_user_id', authData.user.id);
+      
+      return new Response(
+        JSON.stringify({ error: 'Erro ao criar perfil: ' + profileError.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.log('Registration successful for:', email);
 
     return new Response(

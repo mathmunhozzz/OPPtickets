@@ -8,24 +8,30 @@ import Tickets from "./pages/Tickets";
 import Usuarios from "./pages/Usuarios";
 import NotFound from "./pages/NotFound";
 import Relatorios from "./pages/Relatorios";
+import AguardeAprovacao from "./pages/AguardeAprovacao";
 
 import { AuthGuard } from "./components/auth/AuthGuard";
+import { ApprovalGuard } from "./components/auth/ApprovalGuard";
 import ClientContacts from "./pages/ClientContacts";
 import ClientRegister from "./pages/ClientRegister";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "sonner";
 
 const queryClient = new QueryClient();
 
 const ProtectedRoutes = () => {
   return (
-    <Routes>
-      <Route path="/" element={<Dashboard />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/tickets" element={<Tickets />} />
-      <Route path="/usuarios" element={<Usuarios />} />
-      <Route path="/client-contacts" element={<ClientContacts />} />
-      <Route path="/relatorios" element={<Relatorios />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <ApprovalGuard>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/tickets" element={<Tickets />} />
+        <Route path="/usuarios" element={<Usuarios />} />
+        <Route path="/client-contacts" element={<ClientContacts />} />
+        <Route path="/relatorios" element={<Relatorios />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </ApprovalGuard>
   );
 };
 
@@ -36,8 +42,11 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Login />} />
         <Route path="/client-register" element={<ClientRegister />} />
+        <Route path="/aguarde-aprovacao" element={<AuthGuard><AguardeAprovacao /></AuthGuard>} />
         <Route path="*" element={<AuthGuard><ProtectedRoutes /></AuthGuard>} />
       </Routes>
+      <Toaster />
+      <SonnerToaster />
     </QueryClientProvider>
   );
 }

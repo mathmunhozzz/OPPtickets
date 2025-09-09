@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface ClientRegistrationData {
   name: string;
@@ -14,6 +15,7 @@ interface ClientRegistrationData {
 
 export const useClientRegistration = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   return useMutation({
     mutationFn: async (data: ClientRegistrationData) => {
@@ -35,9 +37,10 @@ export const useClientRegistration = () => {
     onSuccess: () => {
       toast({
         title: "Cadastro realizado com sucesso!",
-        description: "Seu cadastro está aguardando aprovação. Você receberá uma confirmação por email.",
+        description: "Você será redirecionado para aguardar a aprovação.",
       });
       queryClient.invalidateQueries({ queryKey: ['client-contacts'] });
+      navigate('/aguarde-aprovacao');
     },
     onError: (error: any) => {
       console.error('Erro no cadastro:', error);
