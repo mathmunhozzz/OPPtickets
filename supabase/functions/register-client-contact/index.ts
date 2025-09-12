@@ -55,46 +55,53 @@ serve(async (req) => {
       );
     }
 
-    // Check if email already exists
+    // Check if email already exists in funcionarios_clientes
     const { data: existingContact } = await supabaseAdmin
       .from('funcionarios_clientes')
-      .select('id')
+      .select('id, auth_user_id')
       .eq('email', email)
       .single();
 
     if (existingContact) {
+      console.error('Email already exists in funcionarios_clientes:', email);
       return new Response(
-        JSON.stringify({ error: 'Este email já está cadastrado' }),
+        JSON.stringify({ error: 'Este email já está cadastrado como contato de cliente' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Create auth user
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      user_metadata: {
-        name,
-        is_client: true
-      },
-      email_confirm: true // Auto-confirm the email
-    });
+    // Check if email already exists in auth.users
+    const { data: existingAuthUsers } = await supabaseAdmin.auth.admin.listUsers();
+    const existingAuthUser = existingAuthUsers.users?.find(user => user.email === email);
+    let isNewAuthUser = false;
+    
+    let authData;
+    if (existingAuthUser) {
+      console.log('Auth user already exists, using existing user:', email);
+      authData = { user: existingAuthUser };
+    } else {
+      // Create new auth user
+      console.log('Creating new auth user:', email);
+      isNewAuthUser = true;
+      const { data: newAuthData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        user_metadata: {
+          name,
+          is_client: true
+        },
+        email_confirm: true // Auto-confirm the email
+      });
 
-    if (authError || !authData.user) {
-      console.error('Auth user creation failed:', authError);
-      
-      // Check for specific email already exists error
-      if (authError.message.includes('already registered')) {
+      if (authError || !newAuthData.user) {
+        console.error('Auth user creation failed:', authError);
         return new Response(
-          JSON.stringify({ error: 'Este email já está cadastrado no sistema' }),
+          JSON.stringify({ error: 'Erro ao criar usuário: ' + authError.message }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
       
-      return new Response(
-        JSON.stringify({ error: 'Erro ao criar usuário: ' + authError.message }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      authData = newAuthData;
     }
 
     // Insert into funcionarios_clientes table
@@ -115,8 +122,10 @@ serve(async (req) => {
     if (contactError) {
       console.error('Contact insertion failed:', contactError);
       
-      // Cleanup: delete the auth user if contact creation fails
-      await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+      // Cleanup: delete the auth user if contact creation fails and we created it
+      if (isNewAuthUser) {
+        await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+      }
       
       return new Response(
         JSON.stringify({ error: 'Erro ao criar contato: ' + contactError.message }),
@@ -124,20 +133,25 @@ serve(async (req) => {
       );
     }
 
-    // Insert into profiles table with pending status
+    // Insert or update profile table with pending status (UPSERT)
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .insert({
+      .upsert({
         user_id: authData.user.id,
         name,
         account_status: 'pending'
+      }, {
+        onConflict: 'user_id'
       });
 
     if (profileError) {
-      console.error('Profile insertion failed:', profileError);
+      console.error('Profile upsert failed:', profileError);
       
-      // Cleanup: delete the auth user and contact if profile creation fails
-      await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+      // Cleanup: delete the contact if profile creation fails
+      // Only delete auth user if we created it in this session
+      if (isNewAuthUser) {
+        await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+      }
       await supabaseAdmin.from('funcionarios_clientes').delete().eq('auth_user_id', authData.user.id);
       
       return new Response(
