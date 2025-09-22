@@ -7,13 +7,15 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar, User, Tag, Clock, History, Trash2, Save, Edit3 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Calendar, User, Tag, Clock, History, Trash2, Save, Edit3, MessageSquare, Send } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { DeleteTicketDialog } from './DeleteTicketDialog';
+import { useTicketComments } from '@/hooks/useTicketComments';
 
 interface TicketDialogProps {
   ticket: any;
@@ -34,6 +36,12 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
   const [description, setDescription] = useState(ticket.description || '');
+  const [editingRequestNumber, setEditingRequestNumber] = useState(false);
+  const [requestNumber, setRequestNumber] = useState(ticket.request_number || '');
+  const [newComment, setNewComment] = useState('');
+
+  // Comments hook
+  const { comments, isLoading: isLoadingComments, addComment, isAddingComment } = useTicketComments(ticket.id);
 
   // Buscar funcionários para atribuição
   const { data: employees } = useQuery({
@@ -160,6 +168,44 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
     setEditingDescription(false);
   };
 
+  const handleRequestNumberSave = async () => {
+    setUpdating(true);
+    try {
+      const { error } = await supabase
+        .from('tickets')
+        .update({ request_number: requestNumber.trim() || null })
+        .eq('id', ticket.id);
+
+      if (error) throw error;
+      
+      toast.success('Número da solicitação atualizado com sucesso!');
+      setEditingRequestNumber(false);
+      onRefetch();
+    } catch (error) {
+      console.error('Erro ao atualizar número da solicitação:', error);
+      toast.error('Erro ao atualizar número da solicitação');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleRequestNumberCancel = () => {
+    setRequestNumber(ticket.request_number || '');
+    setEditingRequestNumber(false);
+  };
+
+  const handleAddComment = () => {
+    if (!newComment.trim()) return;
+    addComment(newComment);
+    setNewComment('');
+  };
+
+  const handleCommentKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && e.ctrlKey) {
+      handleAddComment();
+    }
+  };
+
   const getActionLabel = (actionType: string, oldValue?: string, newValue?: string) => {
     switch (actionType) {
       case 'created':
@@ -214,8 +260,12 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
         </DialogHeader>
 
         <Tabs defaultValue="details" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="details">Detalhes</TabsTrigger>
+            <TabsTrigger value="comments" className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Comentários ({comments?.length || 0})
+            </TabsTrigger>
             <TabsTrigger value="history" className="flex items-center gap-2">
               <History className="h-4 w-4" />
               Histórico
@@ -318,23 +368,74 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
                       <p className="mt-1 text-sm text-muted-foreground bg-slate-50 p-3 rounded-md whitespace-pre-wrap break-words min-h-[60px]">
                         {ticket.description || 'Nenhuma descrição fornecida'}
                       </p>
-                    )}
-                  </div>
+                     )}
+                   </div>
 
-                  {ticket.tags && ticket.tags.length > 0 && (
-                    <div>
-                      <span className="font-medium text-sm">Tags:</span>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {ticket.tags.map((tag: string, index: number) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                   {/* Número da Solicitação */}
+                   <div>
+                     <div className="flex items-center justify-between mb-2">
+                       <span className="font-medium text-sm">Número da Solicitação:</span>
+                       {!editingRequestNumber && (
+                         <Button
+                           variant="ghost"
+                           size="sm"
+                           className="h-6 px-2 text-xs"
+                           onClick={() => setEditingRequestNumber(true)}
+                         >
+                           <Edit3 className="h-3 w-3 mr-1" />
+                           Editar
+                         </Button>
+                       )}
+                     </div>
+                     
+                     {editingRequestNumber ? (
+                       <div className="space-y-2">
+                         <Input
+                           value={requestNumber}
+                           onChange={(e) => setRequestNumber(e.target.value)}
+                           placeholder="Digite o número da solicitação..."
+                           disabled={updating}
+                         />
+                         <div className="flex gap-2">
+                           <Button
+                             size="sm"
+                             onClick={handleRequestNumberSave}
+                             disabled={updating}
+                           >
+                             <Save className="h-3 w-3 mr-1" />
+                             Salvar
+                           </Button>
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             onClick={handleRequestNumberCancel}
+                             disabled={updating}
+                           >
+                             Cancelar
+                           </Button>
+                         </div>
+                       </div>
+                     ) : (
+                       <p className="mt-1 text-sm text-muted-foreground bg-slate-50 p-3 rounded-md">
+                         {ticket.request_number || 'Nenhum número de solicitação definido'}
+                       </p>
+                     )}
+                   </div>
+
+                   {ticket.tags && ticket.tags.length > 0 && (
+                     <div>
+                       <span className="font-medium text-sm">Tags:</span>
+                       <div className="flex flex-wrap gap-1 mt-1">
+                         {ticket.tags.map((tag: string, index: number) => (
+                           <Badge key={index} variant="outline" className="text-xs">
+                             {tag}
+                           </Badge>
+                         ))}
+                       </div>
+                     </div>
+                   )}
+                 </CardContent>
+               </Card>
 
               {/* Controles de status e atribuição */}
               <Card>
@@ -394,6 +495,69 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="comments" className="space-y-4">
+            <Card>
+              <CardContent className="p-4">
+                <h3 className="font-semibold text-lg mb-4">Comentários</h3>
+                
+                {/* Add new comment */}
+                <div className="space-y-3 mb-6">
+                  <Textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Adicione um comentário... (Ctrl+Enter para enviar)"
+                    className="min-h-[80px] resize-none"
+                    onKeyPress={handleCommentKeyPress}
+                  />
+                  <div className="flex justify-end">
+                    <Button 
+                      onClick={handleAddComment}
+                      disabled={!newComment.trim() || isAddingComment}
+                      size="sm"
+                    >
+                      <Send className="h-4 w-4 mr-2" />
+                      {isAddingComment ? 'Enviando...' : 'Enviar Comentário'}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Comments list */}
+                {isLoadingComments ? (
+                  <div className="text-center py-4 text-muted-foreground">
+                    Carregando comentários...
+                  </div>
+                ) : comments && comments.length > 0 ? (
+                  <div className="space-y-4">
+                    {comments.map((comment) => (
+                      <div key={comment.id} className="flex items-start gap-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                        <div className="p-2 rounded-full bg-blue-100">
+                          <MessageSquare className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-sm text-slate-800 whitespace-pre-wrap break-words">
+                            {comment.message}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-2 flex items-center gap-2">
+                            <User className="h-3 w-3" />
+                            <span className="font-medium text-blue-600">{comment.author_name}</span>
+                            <span>•</span>
+                            <span>{format(new Date(comment.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>Nenhum comentário ainda</p>
+                    <p className="text-sm">Seja o primeiro a comentar!</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="history" className="space-y-4">
