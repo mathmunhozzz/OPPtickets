@@ -178,12 +178,12 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
 
       if (error) throw error;
       
-      toast.success('Número da solicitação atualizado com sucesso!');
+      toast.success('Número da ordem de serviço atualizado com sucesso!');
       setEditingRequestNumber(false);
       onRefetch();
     } catch (error) {
-      console.error('Erro ao atualizar número da solicitação:', error);
-      toast.error('Erro ao atualizar número da solicitação');
+      console.error('Erro ao atualizar número da ordem de serviço:', error);
+      toast.error('Erro ao atualizar número da ordem de serviço');
     } finally {
       setUpdating(false);
     }
@@ -371,10 +371,10 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
                      )}
                    </div>
 
-                   {/* Número da Solicitação */}
+                   {/* Número da Ordem de Serviço */}
                    <div>
                      <div className="flex items-center justify-between mb-2">
-                       <span className="font-medium text-sm">Número da Solicitação:</span>
+                       <span className="font-medium text-sm">Número da Ordem de Serviço:</span>
                        {!editingRequestNumber && (
                          <Button
                            variant="ghost"
@@ -393,7 +393,7 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
                          <Input
                            value={requestNumber}
                            onChange={(e) => setRequestNumber(e.target.value)}
-                           placeholder="Digite o número da solicitação..."
+                           placeholder="Ex: OS-2024-001, 12345, etc..."
                            disabled={updating}
                          />
                          <div className="flex gap-2">
@@ -417,7 +417,7 @@ export const TicketDialog = ({ ticket, open, onOpenChange, onRefetch }: TicketDi
                        </div>
                      ) : (
                        <p className="mt-1 text-sm text-muted-foreground bg-slate-50 p-3 rounded-md">
-                         {ticket.request_number || 'Nenhum número de solicitação definido'}
+                         {ticket.request_number || 'Nenhum número de ordem de serviço definido'}
                        </p>
                      )}
                    </div>
