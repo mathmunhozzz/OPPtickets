@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from "https://deno.land/std@0.208.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.46.1'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -248,10 +248,11 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Erro não tratado no webhook:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: 'Erro interno do servidor: ' + error.message 
+        error: 'Erro interno do servidor: ' + errorMessage 
       }),
       { 
         status: 500, 

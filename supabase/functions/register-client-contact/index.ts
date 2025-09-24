@@ -95,8 +95,9 @@ serve(async (req) => {
 
       if (authError || !newAuthData.user) {
         console.error('Auth user creation failed:', authError);
+        const errorMessage = authError?.message || 'Erro desconhecido na criação do usuário';
         return new Response(
-          JSON.stringify({ error: 'Erro ao criar usuário: ' + authError.message }),
+          JSON.stringify({ error: 'Erro ao criar usuário: ' + errorMessage }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
