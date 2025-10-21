@@ -189,7 +189,8 @@ serve(async (req) => {
           const hours = String(date.getHours()).padStart(2, '0');
           const minutes = String(date.getMinutes()).padStart(2, '0');
           const dataHora = `${day}/${month}/${year}, ${hours}:${minutes}`;
-          return `[${dataHora}] ${msg.tipo}:\n${msg.texto}`;
+          const autorNome = msg.tipo === 'Cliente' ? spokenData.contato : employee.name;
+          return `[${dataHora}] ${autorNome}:\n${msg.texto}`;
         })
         .join('\n\n---\n\n');
       
