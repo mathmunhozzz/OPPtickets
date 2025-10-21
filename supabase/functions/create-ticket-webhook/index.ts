@@ -48,7 +48,7 @@ serve(async (req) => {
       }),
       { 
         status: 405, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' } 
       }
     );
   }
@@ -65,7 +65,7 @@ serve(async (req) => {
       }),
       { 
         status: 401, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' } 
       }
     );
   }
@@ -82,7 +82,7 @@ serve(async (req) => {
       }),
       { 
         status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' } 
       }
     );
   }
@@ -96,7 +96,7 @@ serve(async (req) => {
       }),
       { 
         status: 401, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' } 
       }
     );
   }
@@ -143,7 +143,7 @@ serve(async (req) => {
             error: 'Erro ao buscar funcionário', 
             details: employeeError.message 
           }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' } }
         );
       }
       
@@ -155,7 +155,7 @@ serve(async (req) => {
             error: 'Funcionário não encontrado', 
             details: `Nenhum funcionário cadastrado com CPF: ${spokenData.cpfUsuario}. Por favor, cadastre o funcionário primeiro.` 
           }),
-          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' } }
         );
       }
 
@@ -179,13 +179,16 @@ serve(async (req) => {
         }
       }
       
-      // 3. Formata mensagens para descrição
+      // 3. Formata mensagens para descrição (com formatação manual para preservar UTF-8)
       const description = spokenData.mensagens
         .map(msg => {
-          const dataHora = new Date(msg.dataHora).toLocaleString('pt-BR', {
-            dateStyle: 'short',
-            timeStyle: 'short'
-          });
+          const date = new Date(msg.dataHora);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          const dataHora = `${day}/${month}/${year}, ${hours}:${minutes}`;
           return `[${dataHora}] ${msg.tipo}:\n${msg.texto}`;
         })
         .join('\n\n---\n\n');
@@ -217,7 +220,7 @@ serve(async (req) => {
         }),
         { 
           status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' } 
         }
       );
     }
@@ -263,7 +266,7 @@ serve(async (req) => {
         }),
         { 
           status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' } 
         }
       );
     }
@@ -285,7 +288,7 @@ serve(async (req) => {
           }),
           { 
             status: 400, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' } 
           }
         );
       }
@@ -308,7 +311,7 @@ serve(async (req) => {
           }),
           { 
             status: 400, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' } 
           }
         );
       }
@@ -331,7 +334,7 @@ serve(async (req) => {
           }),
           { 
             status: 400, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' } 
           }
         );
       }
@@ -370,7 +373,7 @@ serve(async (req) => {
         }),
         { 
           status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' } 
         }
       );
     }
@@ -394,7 +397,7 @@ serve(async (req) => {
       JSON.stringify(response),
       { 
         status: 201, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' } 
       }
     );
 
@@ -408,7 +411,7 @@ serve(async (req) => {
       }),
       { 
         status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' } 
       }
     );
   }
