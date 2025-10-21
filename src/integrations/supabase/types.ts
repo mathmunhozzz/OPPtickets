@@ -170,6 +170,7 @@ export type Database = {
       employees: {
         Row: {
           auth_user_id: string | null
+          cpf: string | null
           created_at: string
           email: string | null
           id: string
@@ -179,6 +180,7 @@ export type Database = {
         }
         Insert: {
           auth_user_id?: string | null
+          cpf?: string | null
           created_at?: string
           email?: string | null
           id?: string
@@ -188,6 +190,7 @@ export type Database = {
         }
         Update: {
           auth_user_id?: string | null
+          cpf?: string | null
           created_at?: string
           email?: string | null
           id?: string

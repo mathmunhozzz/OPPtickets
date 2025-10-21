@@ -21,6 +21,18 @@ interface CreateTicketRequest {
   created_by_email?: string;
 }
 
+// Interface para dados do sistema Spoken
+interface SpokenTicketRequest {
+  idTicket: string;
+  contato: string;
+  cpfUsuario: string;
+  mensagens: Array<{
+    texto: string;
+    tipo: string;
+    dataHora: string;
+  }>;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -51,8 +63,100 @@ serve(async (req) => {
     );
 
     // Parse request body
-    const requestData: CreateTicketRequest = await req.json();
-    console.log('Dados recebidos:', JSON.stringify(requestData, null, 2));
+    const body = await req.json();
+    console.log('Dados recebidos:', JSON.stringify(body, null, 2));
+
+    // Detecta se é formato Spoken ou formato original
+    const isSpokenFormat = 'idTicket' in body && 'cpfUsuario' in body && 'mensagens' in body;
+    console.log(`Formato detectado: ${isSpokenFormat ? 'Spoken' : 'Padrão'}`);
+
+    let requestData: CreateTicketRequest;
+
+    if (isSpokenFormat) {
+      // Processa formato Spoken
+      const spokenData = body as SpokenTicketRequest;
+      console.log('=== Processando dados do Spoken ===');
+      
+      // 1. Busca usuário por CPF
+      console.log(`Buscando funcionário com CPF: ${spokenData.cpfUsuario}`);
+      const { data: employee, error: employeeError } = await supabase
+        .from('employees')
+        .select('auth_user_id, name')
+        .eq('cpf', spokenData.cpfUsuario)
+        .maybeSingle();
+      
+      if (employeeError) {
+        console.error('Erro ao buscar funcionário por CPF:', employeeError);
+        return new Response(
+          JSON.stringify({ 
+            success: false,
+            error: 'Erro ao buscar funcionário', 
+            details: employeeError.message 
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      if (!employee?.auth_user_id) {
+        console.error(`Funcionário não encontrado com CPF: ${spokenData.cpfUsuario}`);
+        return new Response(
+          JSON.stringify({ 
+            success: false,
+            error: 'Funcionário não encontrado', 
+            details: `Nenhum funcionário cadastrado com CPF: ${spokenData.cpfUsuario}. Por favor, cadastre o funcionário primeiro.` 
+          }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log(`Funcionário encontrado: ${employee.name} (${employee.auth_user_id})`);
+      
+      // 2. Busca contato do cliente por nome (opcional)
+      let clientContactId: string | undefined;
+      if (spokenData.contato && spokenData.contato.trim() !== '') {
+        console.log(`Buscando contato do cliente: ${spokenData.contato}`);
+        const { data: contact } = await supabase
+          .from('funcionarios_clientes')
+          .select('id, name')
+          .ilike('name', `%${spokenData.contato}%`)
+          .maybeSingle();
+        
+        if (contact) {
+          clientContactId = contact.id;
+          console.log(`Contato encontrado: ${contact.name} (${contact.id})`);
+        } else {
+          console.log(`Contato não encontrado para: ${spokenData.contato} (ticket será criado sem contato)`);
+        }
+      }
+      
+      // 3. Formata mensagens para descrição
+      const description = spokenData.mensagens
+        .map(msg => {
+          const dataHora = new Date(msg.dataHora).toLocaleString('pt-BR', {
+            dateStyle: 'short',
+            timeStyle: 'short'
+          });
+          return `[${dataHora}] ${msg.tipo}:\n${msg.texto}`;
+        })
+        .join('\n\n---\n\n');
+      
+      // 4. Monta request no formato esperado
+      requestData = {
+        title: `Ticket Spoken #${spokenData.idTicket} - ${spokenData.contato}`,
+        description: description,
+        request_number: spokenData.idTicket,
+        created_by: employee.auth_user_id,
+        client_contact_id: clientContactId,
+        priority: 'media',
+        status: 'pendente',
+        tags: ['spoken', 'importado']
+      };
+      
+      console.log('Dados convertidos do Spoken:', JSON.stringify(requestData, null, 2));
+    } else {
+      // Usa formato original
+      requestData = body as CreateTicketRequest;
+    }
 
     // Validate required fields
     if (!requestData.title || requestData.title.trim() === '') {
@@ -99,11 +203,9 @@ serve(async (req) => {
       }
     }
 
-    // If still no user found, use a default system user or return error
+    // If still no user found, return error
     if (!created_by) {
-      console.log('Nenhum usuário encontrado, usando usuário padrão do sistema');
-      // You might want to create a system user or use a specific UUID here
-      // For now, we'll return an error requiring a valid user
+      console.log('Nenhum usuário encontrado');
       return new Response(
         JSON.stringify({ 
           success: false, 
