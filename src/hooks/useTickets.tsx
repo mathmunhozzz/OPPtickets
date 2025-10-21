@@ -38,6 +38,7 @@ export const useTickets = () => {
             )
           )
         `)
+        .eq('source', 'manual')
         .order('created_at', { ascending: false });
 
       if (error) {
