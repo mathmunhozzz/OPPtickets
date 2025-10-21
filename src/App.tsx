@@ -5,6 +5,7 @@ import { Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Tickets from "./pages/Tickets";
+import SpokenTickets from "./pages/SpokenTickets";
 import Usuarios from "./pages/Usuarios";
 import NotFound from "./pages/NotFound";
 import Relatorios from "./pages/Relatorios";
@@ -26,6 +27,7 @@ const ProtectedRoutes = () => {
         <Route path="/" element={<Dashboard />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/tickets" element={<Tickets />} />
+        <Route path="/chamados-spoken" element={<SpokenTickets />} />
         <Route path="/usuarios" element={<Usuarios />} />
         <Route path="/client-contacts" element={<ClientContacts />} />
         <Route path="/relatorios" element={<Relatorios />} />

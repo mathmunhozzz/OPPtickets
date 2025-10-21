@@ -476,6 +476,7 @@ export type Database = {
           priority: string | null
           request_number: string | null
           sector_id: string | null
+          source: string | null
           status: Database["public"]["Enums"]["ticket_status"]
           tags: string[]
           title: string
@@ -492,6 +493,7 @@ export type Database = {
           priority?: string | null
           request_number?: string | null
           sector_id?: string | null
+          source?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
           tags?: string[]
           title: string
@@ -508,6 +510,7 @@ export type Database = {
           priority?: string | null
           request_number?: string | null
           sector_id?: string | null
+          source?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
           tags?: string[]
           title?: string

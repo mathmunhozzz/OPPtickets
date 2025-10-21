@@ -9,7 +9,8 @@ import {
   UserCheck, 
   LogOut,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Radio
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -32,6 +33,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 const mainItems = [
   { title: "Dashboard", url: "/", icon: Home },
   { title: "Tickets", url: "/tickets", icon: Ticket },
+  { title: "Chamados Spoken", url: "/chamados-spoken", icon: Radio },
   { title: "Viagens", url: "/viagens", icon: Calendar },
 ];
 

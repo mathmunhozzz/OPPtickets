@@ -354,6 +354,7 @@ serve(async (req) => {
       client_contact_id: requestData.client_contact_id || null,
       due_date: requestData.due_date || null,
       created_by: created_by,
+      source: isSpokenFormat ? 'spoken_api' : 'manual',
     };
 
     console.log('Dados do ticket a ser criado:', JSON.stringify(ticketData, null, 2));
