@@ -53,6 +53,56 @@ serve(async (req) => {
     );
   }
 
+  // Validate Bearer Token
+  const authHeader = req.headers.get('Authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.warn('⚠️ Tentativa de acesso sem token válido');
+    return new Response(
+      JSON.stringify({ 
+        success: false, 
+        error: 'Token de autenticação não fornecido. Use o header: Authorization: Bearer SEU_TOKEN' 
+      }),
+      { 
+        status: 401, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
+  }
+
+  const providedToken = authHeader.replace('Bearer ', '');
+  const validToken = Deno.env.get('WEBHOOK_API_TOKEN');
+
+  if (!validToken) {
+    console.error('❌ WEBHOOK_API_TOKEN não configurado no servidor');
+    return new Response(
+      JSON.stringify({ 
+        success: false, 
+        error: 'Erro de configuração do servidor' 
+      }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
+  }
+
+  if (providedToken !== validToken) {
+    console.warn('⚠️ Tentativa de acesso com token inválido');
+    return new Response(
+      JSON.stringify({ 
+        success: false, 
+        error: 'Token de autenticação inválido' 
+      }),
+      { 
+        status: 401, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
+  }
+
+  console.log('✓ Token validado com sucesso');
+
   try {
     console.log('=== Iniciando criação de ticket via webhook ===');
     
