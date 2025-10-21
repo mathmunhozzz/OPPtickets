@@ -107,6 +107,7 @@ export const TicketBoard = () => {
             clients:client_id (id, name)
           )
         `)
+        .eq('source', 'manual')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
