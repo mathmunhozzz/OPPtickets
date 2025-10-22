@@ -1,3 +1,8 @@
+/**
+ * OPPTickets - Sistema de Gestão de Tickets
+ * Desenvolvido por: Matheus Munhoz
+ * Copyright © 2025 Matheus Munhoz
+ */
 
 import React from 'react';
 import { createRoot } from 'react-dom/client';

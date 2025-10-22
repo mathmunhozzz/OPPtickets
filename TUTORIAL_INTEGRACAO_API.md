@@ -1,5 +1,7 @@
 # 📚 Tutorial de Integração - API de Criação de Tickets
 
+**Desenvolvido por:** Matheus Munhoz
+
 ## 🔗 Informações da API
 
 - **URL da API:** `https://ninybkgnipuxmvcaxkwt.supabase.co/functions/v1/create-ticket-webhook`

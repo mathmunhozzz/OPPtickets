@@ -1,21 +1,31 @@
-**Use your preferred IDE**
+# OPPTickets
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Sistema de gerenciamento de tickets desenvolvido por Matheus Munhoz.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🚀 Instalação e Uso
 
-Follow these steps:
+Para executar o projeto localmente, você precisa ter Node.js e npm instalados - [instalar com nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+
+Siga os passos abaixo:
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Passo 1: Clone o repositório usando a URL do Git do projeto.
+git clone <URL_DO_SEU_GIT>
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Passo 2: Navegue até o diretório do projeto.
+cd <NOME_DO_PROJETO>
 
-# Step 3: Install the necessary dependencies.
+# Passo 3: Instale as dependências necessárias.
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Passo 4: Inicie o servidor de desenvolvimento.
 npm run dev
 ```
+
+## 👨‍💻 Autor
+
+**Matheus Munhoz**
+
+## 📄 Licença
+
+Copyright © 2025 Matheus Munhoz. Todos os direitos reservados.
